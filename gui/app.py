@@ -246,6 +246,19 @@ class App(tk.Tk):
             "use_code_ec": self.v_use_code_ec,
         }
 
+    def _on_fc_final_changed(self, *args):
+        """Auto-derive concrete name (e.g. 'C45') when fc_final changes."""
+        val = self.v_fc_final.get().strip()
+        try:
+            fc = float(val)
+            # Use integer formatting if it's a whole number
+            if fc.is_integer():
+                self.v_conc_name.set(f"C{int(fc)}")
+            else:
+                self.v_conc_name.set(f"C{fc}")
+        except ValueError:
+            pass  # if user is typing or typed invalid number, do nothing
+
     # ══════════════════════════════════════════════════════════════════════════
     # API Enum Discovery
     # ══════════════════════════════════════════════════════════════════════════
@@ -580,4 +593,6 @@ class App(tk.Tk):
                 self._log(f"  ⚠ {len(build_summary.errors)} build error(s)", "WARN")
 
         finally:
-            sel
+            self._log("Shutting down RAM Concept…", "INFO")
+            concept.shut_down()
+            self._log("Done.", "INFO")

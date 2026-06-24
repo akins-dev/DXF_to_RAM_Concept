@@ -101,7 +101,7 @@ class MaterialsTab(tk.Frame):
                 return default
 
         return ConcreteSpec(
-            name=self.app.v_conc_name.get() or "45 MPa",
+            name=self.app.v_conc_name.get() or "C45",
             fc_final=fval(self.app.v_fc_final, 45.0),
             fc_initial=fval(self.app.v_fc_initial, 30.0),
             poissons_ratio=fval(self.app.v_poisson, 0.2),

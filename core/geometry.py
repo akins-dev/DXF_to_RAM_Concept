@@ -156,13 +156,10 @@ def detect_shape_from_polygon(pts: list[Point]) -> ShapeInfo:
 
         if is_perp:
             # It's a rectangle
-            info.width = min(sides[0], sides[1])
-            info.depth = max(sides[0], sides[1])
-            # Angle: direction of the longer side
-            if sides[0] >= sides[1]:
-                info.angle = math.degrees(math.atan2(dy1, dx1))
-            else:
-                info.angle = math.degrees(math.atan2(dy2, dx2))
+            info.width = sides[0]
+            info.depth = sides[1]
+            # Angle: direction of the first side, matching width (b)
+            info.angle = math.degrees(math.atan2(dy1, dx1))
             return info
 
     # Fallback: use bounding box

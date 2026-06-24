@@ -226,7 +226,7 @@ Examples:
 
 | Property | Description | Default |
 |----------|------------|---------|
-| Concrete Name | Label for the mix | 45 MPa |
+| Concrete Name | Label for the mix | C45 |
 | fc_final (MPa) | 28-day compressive strength | 45 |
 | fc_initial (MPa) | Initial compressive strength | 30 |
 | Poisson's Ratio | — | 0.2 |
