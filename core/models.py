@@ -127,14 +127,31 @@ class OpeningSpec:
 class RecessSpec:
     """Slab recess (step-down) — a depressed slab area.
 
-    Modeled as a slab area with negative TOC and adjusted thickness.
-    The recess_depth is the vertical drop from the main slab surface.
-    When thickness is 0, the builder auto-calculates it to keep the soffit flat.
+    Modeled as a slab area with negative TOC and reduced thickness.
+
+    Geometry (cross-section):
+
+        Main slab TOC = 0
+        ┌──────────────────────────────────────────────┐
+        │            Main Slab (250mm)                 │
+        │   ┌──────────────┐                           │
+        │   │  Recess area │← TOC = -recess_depth      │
+        │   │  (175mm)     │                           │
+        └───┴──────────────┴───────────────────────────┘
+        Bottom (soffit) = -250mm  (flush, no extrusion)
+
+    Formulae applied by the builder:
+        toc       = -recess_depth
+        thickness = slab_thickness - recess_depth
+
+    The user only needs to specify:
+        recess_depth   — how deep the step-down is (e.g. 0.075 for 75mm)
+        slab_thickness — the main slab thickness to reference (default 0.250)
     """
 
-    recess_depth: float = 0.050  # m (50mm default step-down)
-    thickness: float = 0.0  # m (0 = auto: main_slab_thickness - recess_depth)
-    priority: int = 5  # must be higher than main slab to override
+    recess_depth: float = 0.050      # m — how far to step down from the main slab top
+    slab_thickness: float = 0.250    # m — reference main slab thickness (for auto-calc)
+    priority: int = 5                # must be higher than main slab to override
     concrete_name: str = "C45"
     mesh_as_slab: bool = True
 

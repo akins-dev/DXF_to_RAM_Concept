@@ -278,20 +278,36 @@ def build_structure(
         if not polys:
             continue
         conc = _get_concrete(concretes, spec.concrete_name)
+
+        # Geometry:
+        #   TOC       = -recess_depth           (step the top surface down)
+        #   thickness = slab_thickness - recess_depth  (keep the soffit flush)
+        recess_toc = -abs(spec.recess_depth)
+        recess_thickness = spec.slab_thickness - abs(spec.recess_depth)
+        if recess_thickness <= 0:
+            msg = (
+                f"  Recess '{li.layer_name}': recess_depth ({spec.recess_depth}m) "
+                f">= slab_thickness ({spec.slab_thickness}m) — skipping."
+            )
+            summary.errors.append(msg)
+            log(msg)
+            continue
+
         da = cad.default_slab_area
-        da.toc = -abs(spec.recess_depth)  # negative TOC = step down
-        if spec.thickness > 0:
-            da.thickness = spec.thickness
-        else:
-            # Auto-calculate: assume the reference slab thickness minus the recess depth
-            da.thickness = max(0.100, da.thickness - spec.recess_depth)
+        da.toc = recess_toc
+        da.thickness = recess_thickness
         da.concrete = conc
         da.priority = spec.priority
         try:
             da.mesh_as_slab = spec.mesh_as_slab
         except AttributeError:
             pass
-        log(f"Adding {len(polys)} recess(es) from '{li.layer_name}'…")
+        log(
+            f"Adding {len(polys)} recess(es) from '{li.layer_name}' "
+            f"(depth={spec.recess_depth*1000:.0f}mm, "
+            f"toc={recess_toc*1000:.0f}mm, "
+            f"thickness={recess_thickness*1000:.0f}mm)…"
+        )
         for i, poly in enumerate(polys):
             try:
                 sl.add_slab_area(poly2d(poly))

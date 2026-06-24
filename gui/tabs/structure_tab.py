@@ -79,8 +79,8 @@ OPENING_COLUMNS = [
 
 RECESS_COLUMNS = [
     {"key": "layer_name", "label": "Layer Name", "width": 180, "editable": False},
-    {"key": "recess_depth", "label": "Recess Depth", "width": 100},
-    {"key": "thickness", "label": "Thickness (0=Auto)", "width": 120},
+    {"key": "recess_depth", "label": "Recess Depth (m)", "width": 120},
+    {"key": "slab_thickness", "label": "Slab Thickness (m)", "width": 130},
     {"key": "priority", "label": "Priority", "width": 80},
     {"key": "mesh_as_slab", "label": "Mesh as Slab", "width": 100, "edit_type": "check"},
 ]
