@@ -1,207 +1,260 @@
-# DXF → RAM Concept Structural Importer  v2.0
+# DXF → RAM Concept Structural Importer v3.0
 
-A Python tool that reads a DXF file with standard named layers and automatically
-builds the full structural model in RAM Concept via its official Python scripting
-API — walls, columns, beams, slabs, openings, drop caps, drop panels, point/line
-supports, and area springs, all in one click.
+A Python tool that reads structural drawings from AutoCAD DXF files and automatically creates a complete RAM Concept model — including geometry, structural elements, materials, and loads.
 
----
+## Features
 
-## File structure
+### Structural Elements
+| Element | DXF Entity Types | Auto-Detection |
+|---------|-----------------|----------------|
+| **Slab** | Closed LWPOLYLINE/POLYLINE | Multiple thickness zones via layers |
+| **Beam** | LINE/POLYLINE (centerline) | Width×depth from layer name (e.g. `BEAMS 25x80`) |
+| **Column (rectangular)** | LWPOLYLINE/INSERT/POINT | Auto-detects b×d from polygon shape |
+| **Column (circular)** | CIRCLE | Auto-detects diameter from radius |
+| **Wall** | LINE/POLYLINE (centerline) | Thickness from layer name or config |
+| **Opening** | Closed LWPOLYLINE/POLYLINE | — |
+| **Drop Cap** | Closed LWPOLYLINE/POLYLINE | — |
+| **Drop Panel** | Closed LWPOLYLINE/POLYLINE | — |
+| **Point Support** | POINT/CIRCLE | — |
+| **Line Support** | LINE/POLYLINE | — |
+| **Area Spring** | Closed LWPOLYLINE/POLYLINE | — |
 
-```
-dxf_to_ramconcept/
-├── dxf_to_concept_gui.py     ← RUN THIS (main GUI entry point)
-├── layer_config.py           ← master element-type → DXF layer mapping + spec dataclasses
-├── dxf_importer.py           ← DXF parser (ezdxf only, no RAM Concept needed)
-├── ram_concept_builder.py    ← RAM Concept API calls
-├── config.json               ← auto-generated; stores your settings between sessions
-└── README.md                 ← this file
-```
+### Load Types
+| Load | DXF Entity | Properties |
+|------|-----------|-----------|
+| **Point Load** | POINT | Fx, Fy, Fz, Mx, My (dead + live) |
+| **Line Load** | LINE/POLYLINE | Fx, Fy, Fz, Mx, My (dead + live) |
+| **Area Load** | Closed LWPOLYLINE/POLYLINE | Fx, Fy, Fz, Mx, My (dead + live) |
 
----
-
-## Supported elements
-
-| Role | DXF Layer (default) | Entity types read |
-|------|---------------------|-------------------|
-| Slab | `slab` | LWPOLYLINE (closed), POLYLINE, HATCH, SPLINE, SOLID/3DFACE |
-| Wall | `wall` | LINE, LWPOLYLINE, POLYLINE |
-| Column | `column` | POINT, CIRCLE, INSERT (block ref) |
-| Beam | `beam` | LINE, LWPOLYLINE, POLYLINE |
-| Slab Opening | `opening` | LWPOLYLINE (closed), POLYLINE, HATCH |
-| Drop Cap | `drop_cap` | LWPOLYLINE (closed), POLYLINE, HATCH |
-| Drop Panel | `drop_panel` | LWPOLYLINE (closed), POLYLINE, HATCH |
-| Point Support | `point_support` | POINT, CIRCLE, INSERT |
-| Line Support | `line_support` | LINE, LWPOLYLINE, POLYLINE |
-| Area Spring | `area_spring` | LWPOLYLINE (closed), POLYLINE, HATCH |
-
-All layer names are fully configurable in the **Layer Mapping** tab.  
-Point supports and area springs are disabled by default (useful for mat/raft).
+### Key Capabilities
+- **Smart layer auto-detection** — layer names containing keywords (slab, beam, column, wall, etc.) are automatically matched
+- **Dimension parsing from layer names** — e.g. `GC-BEAMS 25x80` → width=0.25m, depth=0.80m
+- **Column shape detection** — CIRCLE entities → circular, polyline → rectangular with auto b×d
+- **Multiple instances per element type** — each DXF layer gets its own editable properties
+- **Above + below slab support** — walls and columns can be continuous through the slab
+- **Materials configuration** — concrete properties with code Ec option
+- **GUI + CLI modes** — Tkinter GUI for interactive use, CLI for scripting/automation
 
 ---
 
-## DXF layer conventions
+## Prerequisites
 
-Draw each element on the matching layer.  You can use any names — just change
-them in the GUI.  Suggested names (defaults):
+- **Python 3.9+**
+- **ezdxf** — `pip install ezdxf`
+- **RAM Concept 2024+** — with the Python scripting API
+- **Tkinter** — included with most Python distributions
 
-```
-slab          → closed polygons of slab boundary (one per slab region)
-wall          → centrelines as LINE or POLYLINE
-column        → POINT, CIRCLE, or INSERT block at the column centroid
-beam          → centrelines as LINE or POLYLINE
-opening       → closed polygons of voids
-drop_cap      → closed polygons (the column cap region only)
-drop_panel    → closed polygons (the wider panel region)
-point_support → POINT / CIRCLE (raft column positions)
-line_support  → LINE / POLYLINE (raft wall positions)
-area_spring   → closed polygons (soil zones with spring stiffnesses)
-```
+## Installation
 
-**Columns from INSERT blocks** — the block insertion point is used as the column
-centroid.  The block's graphical content is NOT modelled; it is only used to
-locate the column.  To assign different sizes to different block types, populate
-`ColumnSpec.block_size_map` in `layer_config.py`:
+```bash
+# Clone or download this project
+cd ram_concept
 
-```python
-ColumnSpec(
-    b=0.4, d=0.4, ...
-    block_size_map={
-        "COL400x400": {"b": 0.40, "d": 0.40, "angle": 0},
-        "COL600x300": {"b": 0.60, "d": 0.30, "angle": 0},
-        "COL600x300_ROT45": {"b": 0.60, "d": 0.30, "angle": 45},
-    }
-)
-```
-
----
-
-## Setup
-
-### 1  Install Python dependencies
-On the machine where RAM Concept is installed and licensed:
-```
+# Install Python dependencies
 pip install ezdxf
 ```
-Python 3.8+ is required (Bentley's API requires 3.8; tested through 3.11).
 
-### 2  Find the RAM Concept Python API folder
-Typically:
+Ensure your RAM Concept installation includes the Python API. The API is typically located at:
 ```
-C:\Program Files\Bentley\RAM Concept CONNECT Edition\python
-```
-The exact path varies with version.  You can also check **Help → Scripting API**
-inside RAM Concept to confirm the location.
-
-### 3  Run the GUI
-```
-python dxf_to_concept_gui.py
+C:\Program Files\Bentley\Engineering\RAM Concept\RAM Concept 2024\python
 ```
 
 ---
 
-## Using the GUI
+## Usage
 
-### Files & Units tab
-- **DXF input file** — your source drawing.
-- **Output .cpt file** — where the RAM Concept model will be saved.
-- **RAM Concept API folder** — point to the `python` folder in your RAM Concept
-  install.  Leave blank if `ram_concept` is already importable (e.g. added to
-  `PYTHONPATH`).
-- **DXF drawing units** — choose the unit your CAD file was drawn in.
-  The importer converts to metres internally.
-- **Design code** — ACI 318-14/19, AS 3600, EC2, BS 8110, CSA, IS 456.
-- **Structure type** — Elevated slab or Mat/Raft foundation.
-- **f'c** — characteristic compressive strength for the single global concrete
-  mix (one mix is used for all elements in this version).
-- **Generate mesh** — ticked by default; untick if you want to inspect geometry
-  before meshing in RAM Concept.
-- **Headless** — run RAM Concept without its GUI (faster, uses same license).
+### GUI Mode (Default)
 
-### Layer Mapping tab
-One row per element type.  Tick the checkbox to enable; type the exact DXF
-layer name.  Click **Scan Layers** in the toolbar to colour-code each row:
-- 🟢 Green = layer found in the DXF file
-- 🔴 Red = layer name not found (check spelling/case)
+```bash
+python main.py
+```
 
-### Element Properties tab
-Set default sizes for each element type.  Values are in your chosen drawing
-unit (mm, m, ft, etc.) and are converted internally.
+**Workflow:**
+1. **Files & Settings tab** — set DXF input file, output .cpt path, RAM API folder, design code, units
+2. Click **"Process DXF"** — scans layers, auto-populates element tables
+3. **Structure tab** — review/edit properties for each element type (one row per matched layer)
+4. **Loads tab** — configure dead/live load values for line, area, and point loads
+5. **Materials tab** — set concrete and PT system properties
+6. Click **"Preview"** — dry-run geometry extraction (no RAM Concept needed)
+7. Click **"Generate in RAM Concept"** — full pipeline: parse DXF → create model → save .cpt
 
-Key notes:
-- **Slab priority** overrides at overlapping regions.  Slab=1, Drop panel=2,
-  Drop cap=3 is the recommended ordering.
-- **Beam depth** is the *total* member depth (including slab thickness for
-  downstand beams in RAM Concept's convention).
-- **No torsion** on beams is recommended for band beams to avoid
-  over-estimated torsional stiffness adjacent to thinner slabs.
-- **Column angle** is measured in degrees from the X-axis.  If your INSERT
-  blocks are rotated, the rotation is read automatically and used as the angle
-  unless you have an explicit block_size_map entry for that block.
+### CLI Mode
 
-### Toolbar actions
-| Button | What it does |
-|--------|--------------|
-| **Scan Layers** | Reads the DXF, colour-codes the Layer Mapping rows |
-| **Preview DXF** | Runs the parser only — no RAM Concept needed.  Shows counts and skipped entity warnings. |
-| **▶ Run Import** | Full pipeline: parse DXF → start RAM Concept → add concrete → build all elements → mesh → save .cpt |
-| **Save Config** | Writes all current settings to `config.json` |
+```bash
+# Preview only (no RAM Concept needed)
+python main.py --cli --dxf input.dxf --preview-only
 
----
+# Full import
+python main.py --cli --dxf input.dxf --output model.cpt \
+    --api "C:/Program Files/.../python" \
+    --units mm --code "ACI 318-14 (SI)" \
+    --fc 45 --concrete-name "C45"
+```
 
-## Design codes available
+### CLI Arguments
 
-| Label in GUI | RAM Concept API constant |
-|---|---|
-| ACI 318-14 (SI) | `DesignCode.ACI318_14SI` |
-| ACI 318-19 (SI) | `DesignCode.ACI318_19SI` |
-| AS 3600-2009 | `DesignCode.AS3600_09` |
-| AS 3600-2018 | `DesignCode.AS3600_18` |
-| Eurocode 2-2004 | `DesignCode.EC2_04SI` |
-| BS 8110:1997 | `DesignCode.BS8110_97SI` |
-| CAN/CSA A23.3-04 | `DesignCode.CSA_A23_04SI` |
-| IS 456:2000 | `DesignCode.IS456_00SI` |
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `--cli` | — | Run without GUI |
+| `--dxf` | — | DXF file path (required in CLI) |
+| `--output` | — | Output .cpt file path |
+| `--api` | — | RAM Concept API 'python' folder |
+| `--units` | `mm` | Drawing units: mm, cm, m, in, ft |
+| `--code` | `ACI 318-14 (SI)` | Design code |
+| `--structure` | `Elevated slab` | Structure type |
+| `--fc` | `45` | Concrete f'c in MPa |
+| `--concrete-name` | `45 MPa` | Concrete mix name |
+| `--no-mesh` | — | Skip auto-mesh after import |
+| `--gui-mode` | — | Show RAM Concept GUI (not headless) |
+| `--preview-only` | — | Preview geometry only |
 
 ---
 
-## What this does NOT do (natural next steps)
+## DXF Drawing Conventions
 
-- **Tendon layout** — add a `tendon` layer and extend the builder to call
-  `structure_layer.add_tendon(...)`.  The RAM Concept Python API supports full
-  tendon geometry and profile points.
-- **Loads** — surface loads, line loads, and point loads are not imported.
-  Extend with an `SDL` (superimposed dead) and `LL` (live load) layer approach,
-  calling `loading_layer.add_area_load(...)`.
-- **Multiple concrete mixes** — currently one global mix.  Add a per-layer
-  concrete name field to each spec and call `concretes.add_concrete()` for each.
-- **Per-column rotation from block geometry** — the block's rectangle geometry
-  is not reverse-engineered; only `e.dxf.rotation` (INSERT rotation angle) and
-  `block_size_map` are used.
-- **ISM / Revit round-trip** — RAM Concept supports ISM; exporting back through
-  ISM after modelling is outside the scope of this tool.
+### Layer Naming
+
+The importer uses **keyword-based matching** — any layer whose name contains one of the keywords below is auto-detected:
+
+| Element | Keywords |
+|---------|----------|
+| Slab | `slab` |
+| Beam | `beam` |
+| Column | `column`, `col` |
+| Wall | `wall` |
+| Opening | `opening`, `void` |
+| Drop Cap | `drop_cap`, `dropcap`, `drop cap` |
+| Drop Panel | `drop_panel`, `droppanel`, `drop panel` |
+| Point Support | `point_support`, `pointsupport` |
+| Line Support | `line_support`, `linesupport` |
+| Area Spring | `area_spring`, `areaspring` |
+| Line Load | `lineload`, `line_load`, `line load` |
+| Area Load | `areaload`, `area_load`, `area load` |
+| Point Load | `pointload`, `point_load`, `point load` |
+
+**Examples:**
+```
+GC-SLAB EDGE 300       → slab (thickness hint: 300 in DXF units)
+GC-BEAMS 25x80         → beam (width=25, depth=80 in DXF units)
+GC-COLUMNS              → column
+GC-Core WALL            → wall
+Opening_01              → opening
+GC-AreaLoad Main        → area load
+```
+
+### Dimension Hints in Layer Names
+
+The importer parses dimensions from layer names:
+- **Two dimensions:** `25x80`, `300X600` → width × depth
+- **Single dimension:** trailing number → thickness or diameter
+
+### DXF Entity Types per Element
+
+| Element | Draw as... |
+|---------|------------|
+| **Slab, Opening, Drop Cap/Panel, Area Spring** | Closed LWPOLYLINE tracing the boundary |
+| **Beam, Wall, Line Support** | LINE or POLYLINE along the centerline |
+| **Column** | CIRCLE for circular, closed LWPOLYLINE for rectangular, or POINT for location-only |
+| **Point Support, Point Load** | POINT entity at the location |
+| **Line Load** | LINE or POLYLINE along the load path |
+| **Area Load** | Closed LWPOLYLINE tracing the loaded area |
+
+---
+
+## Architecture
+
+```
+ram_concept/
+├── main.py                    # Entry point (GUI + CLI)
+├── config.json                # Persisted user settings
+├── core/
+│   ├── constants.py           # Design codes, units, element keywords
+│   ├── models.py              # All dataclasses (specs, config, layers)
+│   ├── geometry.py            # Shape detection + dimension parsing
+│   ├── layer_parser.py        # Keyword-based layer auto-detection
+│   ├── dxf_reader.py          # DXF geometry extraction
+│   ├── ram_builder.py         # RAM Concept structural builder
+│   └── ram_loader.py          # RAM Concept load builder
+├── gui/
+│   ├── app.py                 # Main Tkinter application
+│   ├── theme.py               # Colour palette + ttk styling
+│   ├── widgets.py             # Reusable widgets (entries, tables)
+│   └── tabs/
+│       ├── files_tab.py       # File paths + settings
+│       ├── structure_tab.py   # Structural element tables
+│       ├── loads_tab.py       # Load configuration tables
+│       ├── materials_tab.py   # Concrete + PT properties
+│       └── log_tab.py         # Colour-coded run log
+```
+
+### Data Flow
+
+```
+DXF File
+  │
+  ├─ layer_parser.py ──→ auto-detect layers → LayerInstance list
+  │
+  ├─ dxf_reader.py ───→ extract geometry → ImportResult
+  │                      (segments, polygons, column shapes)
+  │
+  ├─ ram_builder.py ──→ build structural elements in RAM Concept
+  │                      (slabs, beams, columns, walls, etc.)
+  │
+  └─ ram_loader.py ───→ apply loads to loading layers
+                         (point, line, area loads)
+```
+
+---
+
+## Supported Design Codes
+
+- ACI 318-14 (SI)
+- ACI 318-19 (SI)
+- ACI 318-99 (US)
+- AS 3600-2009
+- AS 3600-2018
+- Eurocode 2-2004
+- BS 8110:1997
+- CAN/CSA A23.3-04
+- IS 456:2000
 
 ---
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---------|-------------|-----|
-| `ImportError: No module named 'ram_concept'` | API path wrong or not set | Set "RAM Concept API folder" to the `python` subfolder of your RAM Concept install |
-| Nothing found in preview | Layer names don't match | Use **Scan Layers** to see actual layer names, then update the Layer Mapping tab |
-| RAM Concept error "No areas to mesh" | No slab polygons loaded | Draw your slab outline as a closed LWPOLYLINE on the `slab` layer |
-| Columns at wrong location | DXF INSERT has an offset property | Update ezdxf to ≥ 0.18 which handles INSERT offset correctly |
-| `ValueError: Concrete mix '40 MPa' not found` | Concrete name mismatch | Ensure `concrete_name` in Element Properties matches exactly what was added via `add_concrete_mix()` |
-| License error when running headless | License not available | Check your Bentley SELECT license; running headless still consumes a RAM Concept or RAM Concept PT seat |
+### "Cannot import ram_concept"
+Set the RAM Concept API folder to the `python` subfolder inside your RAM Concept installation directory:
+```
+C:\Program Files\Bentley\Engineering\RAM Concept\RAM Concept 2024\python
+```
+
+### No layers matched
+- Check that your DXF layer names contain element keywords (e.g. `slab`, `beam`, `column`)
+- Layer matching is **case-insensitive** — `SLAB`, `Slab`, `slab` all work
+- Use the **Process DXF** button to see which layers were detected
+
+### Column dimensions are wrong
+- For circular columns: draw as CIRCLE entities (auto-detected diameter)
+- For rectangular columns: draw as closed LWPOLYLINE (auto-detected b × d from bounding box)
+- Fallback: dimensions come from the column spec defaults in the Structure tab
+
+### Loads not appearing
+- Ensure load layers are named with load keywords: `lineload`, `areaload`, `pointload`
+- Dead and live values default to zero — edit them in the Loads tab
+- RAM Concept must have Dead Loading and Live Loading layers (auto-created with new models)
 
 ---
 
-## Acknowledgements
+## Future Extensions
 
-Built on the official Bentley RAM Concept Python scripting API (shipped with
-RAM Concept CONNECT Edition V8+).  DXF reading via the open-source
-[ezdxf](https://ezdxf.readthedocs.io/) library.  Reference patterns from
-Bentley's `add_structure.py`, `add_materials.py`, and `main.py` walkthrough
-samples, plus community work at
-[github.com/danielogg92/RamConcept-API-Python](https://github.com/danielogg92/RamConcept-API-Python)
-and the Eng-Tips RAM Concept scripting thread.
+- **PT Tendon support** — strand, duct, and anchor placement from DXF
+- **Load combinations** — auto-generate from design code
+- **DXF block analysis** — extract column dimensions from block definitions
+- **Template support** — save/load element property templates
+- **Batch import** — process multiple DXF files in sequence
+
+---
+
+## License
+
+Internal tool — Bentley RAM Concept Python API required.
