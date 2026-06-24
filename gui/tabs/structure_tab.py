@@ -77,6 +77,14 @@ OPENING_COLUMNS = [
     {"key": "priority", "label": "Priority", "width": 100},
 ]
 
+RECESS_COLUMNS = [
+    {"key": "layer_name", "label": "Layer Name", "width": 180, "editable": False},
+    {"key": "recess_depth", "label": "Recess Depth", "width": 100},
+    {"key": "thickness", "label": "Thickness (0=Auto)", "width": 120},
+    {"key": "priority", "label": "Priority", "width": 80},
+    {"key": "mesh_as_slab", "label": "Mesh as Slab", "width": 100, "edit_type": "check"},
+]
+
 DROP_CAP_COLUMNS = [
     {"key": "layer_name", "label": "Layer Name", "width": 180, "editable": False},
     {"key": "thickness", "label": "Thickness", "width": 100},
@@ -114,6 +122,7 @@ ROLE_TABLE_DEFS: dict[str, tuple[str, list[dict]]] = {
     "opening": ("Opening", OPENING_COLUMNS),
     "drop_cap": ("Drop Cap", DROP_CAP_COLUMNS),
     "drop_panel": ("Drop Panel", DROP_PANEL_COLUMNS),
+    "recess": ("Recess", RECESS_COLUMNS),
     "point_support": ("Point Support", POINT_SUPPORT_COLUMNS),
     "line_support": ("Line Support", LINE_SUPPORT_COLUMNS),
     "area_spring": ("Area Spring", AREA_SPRING_COLUMNS),

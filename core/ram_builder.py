@@ -35,11 +35,13 @@ from core.models import (
     BeamSpec,
     ColumnSpec,
     WallSpec,
+    LineSupportSpec,
     OpeningSpec,
+    PointLoadSpec,
+    PointSupportSpec,
+    RecessSpec,
     DropCapSpec,
     DropPanelSpec,
-    PointSupportSpec,
-    LineSupportSpec,
     AreaSpringSpec,
     ConcreteSpec,
 )
@@ -57,6 +59,7 @@ class BuildSummary:
     openings_created: int = 0
     drop_caps_created: int = 0
     drop_panels_created: int = 0
+    recesses_created: int = 0
     point_supports_created: int = 0
     line_supports_created: int = 0
     area_springs_created: int = 0
@@ -72,6 +75,7 @@ class BuildSummary:
             + self.openings_created
             + self.drop_caps_created
             + self.drop_panels_created
+            + self.recesses_created
             + self.point_supports_created
             + self.line_supports_created
             + self.area_springs_created
@@ -267,6 +271,36 @@ def build_structure(
                 summary.errors.append(msg)
                 log(msg)
 
+    # ── RECESSES ──────────────────────────────────────────────────────────────
+    for li in config.enabled_instances_by_role("recess"):
+        spec: RecessSpec = li.spec
+        polys = import_result.layer_recess_polygons.get(li.layer_name, [])
+        if not polys:
+            continue
+        conc = _get_concrete(concretes, spec.concrete_name)
+        da = cad.default_slab_area
+        da.toc = -abs(spec.recess_depth)  # negative TOC = step down
+        if spec.thickness > 0:
+            da.thickness = spec.thickness
+        else:
+            # Auto-calculate: assume the reference slab thickness minus the recess depth
+            da.thickness = max(0.100, da.thickness - spec.recess_depth)
+        da.concrete = conc
+        da.priority = spec.priority
+        try:
+            da.mesh_as_slab = spec.mesh_as_slab
+        except AttributeError:
+            pass
+        log(f"Adding {len(polys)} recess(es) from '{li.layer_name}'…")
+        for i, poly in enumerate(polys):
+            try:
+                sl.add_slab_area(poly2d(poly))
+                summary.recesses_created += 1
+            except Exception as exc:
+                msg = f"  Recess #{i+1}: FAILED – {exc}"
+                summary.errors.append(msg)
+                log(msg)
+
     # ── 4. SLAB OPENINGS ──────────────────────────────────────────────────────
     for li in config.enabled_instances_by_role("opening"):
         polys = import_result.layer_opening_polygons.get(li.layer_name, [])
@@ -335,7 +369,7 @@ def build_structure(
         conc = _get_concrete(concretes, spec.concrete_name)
         db = cad.default_beam
         db.width = spec.width
-        db.depth = spec.depth
+        db.thickness = spec.depth
         db.toc = spec.toc
         db.concrete = conc
         db.priority = spec.priority

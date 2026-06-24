@@ -124,6 +124,22 @@ class OpeningSpec:
 
 
 @dataclass
+class RecessSpec:
+    """Slab recess (step-down) — a depressed slab area.
+
+    Modeled as a slab area with negative TOC and adjusted thickness.
+    The recess_depth is the vertical drop from the main slab surface.
+    When thickness is 0, the builder auto-calculates it to keep the soffit flat.
+    """
+
+    recess_depth: float = 0.050  # m (50mm default step-down)
+    thickness: float = 0.0  # m (0 = auto: main_slab_thickness - recess_depth)
+    priority: int = 5  # must be higher than main slab to override
+    concrete_name: str = "C45"
+    mesh_as_slab: bool = True
+
+
+@dataclass
 class DropCapSpec:
     """Column drop-cap — thicker slab area over column."""
 
@@ -302,6 +318,7 @@ SPEC_FACTORY: dict[str, type] = {
     "point_support": PointSupportSpec,
     "line_support": LineSupportSpec,
     "area_spring": AreaSpringSpec,
+    "recess": RecessSpec,
     "lineload": LineLoadSpec,
     "areaload": AreaLoadSpec,
     "pointload": PointLoadSpec,

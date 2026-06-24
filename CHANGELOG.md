@@ -6,6 +6,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [3.0.2] — 2026-06-24
+
+### Added
+- **Slab Recess (Step-down) Support** — automatically model step-downs via the DXF layer name (e.g. `GC-RECESS 50` creates a 50mm depression) or role mapping. Recesses are created as overriding slab areas with negative TOCs.
+
+---
+
 ## [3.0.1] — 2026-06-24
 
 ### Fixed

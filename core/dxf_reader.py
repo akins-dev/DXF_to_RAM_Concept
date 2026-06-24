@@ -94,6 +94,7 @@ class ImportResult:
     drop_cap_polygons: list[Polygon] = field(default_factory=list)
     drop_panel_polygons: list[Polygon] = field(default_factory=list)
     area_spring_polygons: list[Polygon] = field(default_factory=list)
+    recess_polygons: list[Polygon] = field(default_factory=list)
     # Loads — NEW
     line_load_segments: list[Segment] = field(default_factory=list)
     area_load_polygons: list[Polygon] = field(default_factory=list)
@@ -114,6 +115,7 @@ class ImportResult:
     layer_point_support_points: dict[str, list[Point]] = field(default_factory=dict)
     layer_line_support_segments: dict[str, list[Segment]] = field(default_factory=dict)
     layer_area_spring_polygons: dict[str, list[Polygon]] = field(default_factory=dict)
+    layer_recess_polygons: dict[str, list[Polygon]] = field(default_factory=dict)
     layer_line_load_segments: dict[str, list[Segment]] = field(default_factory=dict)
     layer_area_load_polygons: dict[str, list[Polygon]] = field(default_factory=dict)
     layer_point_load_points: dict[str, list[Point]] = field(default_factory=dict)
@@ -184,7 +186,7 @@ def _polygon_from_hatch(e) -> list[Polygon]:
 
 # Roles grouped by geometry type
 LINEAR_ROLES = {"wall", "beam", "line_support", "lineload"}
-POLYGON_ROLES = {"slab", "opening", "drop_cap", "drop_panel", "area_spring", "areaload"}
+POLYGON_ROLES = {"slab", "opening", "drop_cap", "drop_panel", "area_spring", "recess", "areaload"}
 POINT_ROLES = {"point_support", "pointload"}
 COLUMN_ROLE = "column"
 
@@ -284,6 +286,9 @@ def import_dxf(
         elif role == "area_spring":
             result.area_spring_polygons.append(scaled)
             _add_to_layer_list(result.layer_area_spring_polygons, layer_name, scaled)
+        elif role == "recess":
+            result.recess_polygons.append(scaled)
+            _add_to_layer_list(result.layer_recess_polygons, layer_name, scaled)
         elif role == "areaload":
             result.area_load_polygons.append(scaled)
             _add_to_layer_list(result.layer_area_load_polygons, layer_name, scaled)

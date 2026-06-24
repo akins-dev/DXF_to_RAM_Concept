@@ -54,6 +54,7 @@ The importer matches layers by **keyword**. A layer is detected if its name cont
 | Column | `column` or `col` | `column`, `COLUMNS`, `Int Col` |
 | Wall | `wall` | `wall`, `Core Wall`, `SHEAR_WALL` |
 | Opening | `opening` or `void` | `opening`, `Slab Opening`, `void_01` |
+| Recess (Step-down) | `recess` or `stepdown` or `depression` | `recess`, `step_down`, `GC-RECESS 50` |
 | Drop Cap | `drop_cap` or `dropcap` or `drop cap` | `drop_cap`, `Drop Cap Zone` |
 | Drop Panel | `drop_panel` or `droppanel` or `drop panel` | `drop_panel`, `Drop Panel` |
 | Point Support | `point_support` or `pointsupport` | `point_support`, `PointSupport` |
