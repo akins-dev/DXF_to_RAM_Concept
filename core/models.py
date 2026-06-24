@@ -47,7 +47,7 @@ class SlabSpec:
     priority: int = 1  # higher number wins at overlap
     mesh_as_slab: bool = True
     axis: float = 0.0  # reinforcement axis angle (degrees)
-    concrete_name: str = "40 MPa"
+    concrete_name: str = "C45"
     no_torsion: bool = False
     cover_top: float = 0.025  # m
     cover_bottom: float = 0.025  # m
@@ -62,7 +62,7 @@ class BeamSpec:
     toc: float = 0.0
     priority: int = 2
     mesh_as_slab: bool = False
-    concrete_name: str = "40 MPa"
+    concrete_name: str = "C45"
     no_torsion: bool = False
 
 
@@ -88,7 +88,7 @@ class ColumnSpec:
     use_specified_LLR: bool = False
     specified_LLR: float = 0.0
     # Material
-    concrete_name: str = "40 MPa"
+    concrete_name: str = "C45"
     i_factor: float = 1.0
     # Per-block-name overrides {block_name: {"b":..., "d":..., "angle":...}}
     block_size_map: dict = field(default_factory=dict)
@@ -112,7 +112,7 @@ class WallSpec:
     use_specified_LLR: bool = False
     specified_LLR: float = 0.0
     # Material
-    concrete_name: str = "40 MPa"
+    concrete_name: str = "C45"
     i_factor: float = 1.0
 
 
@@ -130,7 +130,7 @@ class DropCapSpec:
     thickness: float = 0.400
     toc: float = 0.0
     priority: int = 3
-    concrete_name: str = "40 MPa"
+    concrete_name: str = "C45"
 
 
 @dataclass
@@ -140,7 +140,7 @@ class DropPanelSpec:
     thickness: float = 0.350
     toc: float = 0.0
     priority: int = 2
-    concrete_name: str = "40 MPa"
+    concrete_name: str = "C45"
 
 
 @dataclass
@@ -243,11 +243,11 @@ class PointLoadSpec:
 
 @dataclass
 class ConcreteSpec:
-    """Concrete material definition."""
+    """Concrete material definition. All stress values in MPa."""
 
-    name: str = "45 MPa"
-    fc_final: float = 45e6  # Pa
-    fc_initial: float = 30e6  # Pa
+    name: str = "C45"
+    fc_final: float = 45.0  # MPa
+    fc_initial: float = 30.0  # MPa
     poissons_ratio: float = 0.2
     unit_mass: float = 2450.0  # kg/m³
     unit_mass_for_loads: float = 2500.0
@@ -256,26 +256,29 @@ class ConcreteSpec:
 
 @dataclass
 class PTSystemSpec:
-    """Post-tensioning system definition (future extension)."""
+    """Post-tensioning system definition (future extension).
+    
+    Stress values in MPa, areas in m², lengths in m.
+    """
 
     pt_name: str = "13mm Bonded"
     strand_name: str = "13mm Strand"
     duct_name: str = "4s Flat"
     anchor_name: str = "FA Multi"
     aps: float = 100e-6  # m²
-    eps: float = 195_000e6  # Pa
-    fse: float = 1_100e6  # Pa
-    fpy: float = 1_564e6  # Pa
-    fpu: float = 1_840e6  # Pa
+    eps: float = 195_000.0  # MPa
+    fse: float = 1_100.0  # MPa
+    fpy: float = 1_564.0  # MPa
+    fpu: float = 1_840.0  # MPa
     duct_width: float = 70e-3  # m
     duct_height: float = 35e-3  # m
     strands_per_duct: int = 4
     min_curvature_radius: float = 2.0  # m
     anchor_friction: float = 0.02
     angular_friction: float = 0.2
-    jack_stress: float = 1_564e6  # Pa
+    jack_stress: float = 1_564.0  # MPa
     seating_distance: float = 6e-3  # m
-    long_term_losses: float = 150e6  # Pa
+    long_term_losses: float = 150.0  # MPa
     wobble_friction: float = 0.005
     system_type: str = "BONDED"  # BONDED or UNBONDED
     duct_shape: str = "FLAT"  # FLAT or ROUND

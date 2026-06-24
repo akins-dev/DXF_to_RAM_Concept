@@ -132,6 +132,10 @@ def run_cli(args):
         print("Set --api to the 'python' subfolder in your RAM Concept install.")
         sys.exit(1)
 
+    # Refresh enum registries from the real API
+    from core.constants import load_api_enums
+    load_api_enums(api_path)
+
     from core.ram_builder import add_concrete_mix, build_structure, BuildSummary
     from core.ram_loader import apply_loads
 
@@ -144,7 +148,7 @@ def run_cli(args):
         unit_key=unit_key,
         concrete=ConcreteSpec(
             name=args.concrete_name,
-            fc_final=args.fc * 1e6,
+            fc_final=args.fc,
         ),
         layer_instances=instances,
         mesh_after=not args.no_mesh,
@@ -158,10 +162,22 @@ def run_cli(args):
 
         dc_str = DESIGN_CODES[config.design_code]
         st_str = STRUCTURE_TYPES[config.structure_type]
+
+        def _safe_enum(cls, name, label):
+            try:
+                return getattr(cls, name)
+            except AttributeError:
+                members = [m for m in dir(cls) if not m.startswith("_") and m[0].isupper()]
+                print(f"ERROR: {label} has no member '{name}'.")
+                print(f"  Valid members: {', '.join(sorted(members))}")
+                print(f"  Fix the mapping in core/constants.py")
+                sys.exit(1)
+
         model.setup_new_model(
-            getattr(DesignCode, dc_str), getattr(StructureType, st_str)
+            _safe_enum(DesignCode, dc_str, "DesignCode"),
+            _safe_enum(StructureType, st_str, "StructureType"),
         )
-        print(f"  Design code: {config.design_code}")
+        print(f"  Design code: {config.design_code} → {dc_str}")
 
         add_concrete_mix(model, config.concrete)
         print(f"  Concrete: {config.concrete.name}")

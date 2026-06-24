@@ -82,26 +82,28 @@ class FilesTab(tk.Frame):
         tk.Label(df, text="Design code:", bg=C_PANEL, fg=C_MUTED).grid(
             row=0, column=0, sticky="w", padx=8
         )
-        ttk.Combobox(
+        self._code_dd = ttk.Combobox(
             df,
             textvariable=self.app.v_design_code,
             values=list(DESIGN_CODES.keys()),
-            width=26,
+            width=32,
             state="readonly",
             style="Dark.TCombobox",
-        ).grid(row=0, column=1, padx=4, sticky="w")
+        )
+        self._code_dd.grid(row=0, column=1, padx=4, sticky="w")
 
         tk.Label(df, text="Structure type:", bg=C_PANEL, fg=C_MUTED).grid(
             row=1, column=0, sticky="w", padx=8, pady=4
         )
-        ttk.Combobox(
+        self._struct_dd = ttk.Combobox(
             df,
             textvariable=self.app.v_struct_type,
             values=list(STRUCTURE_TYPES.keys()),
-            width=26,
+            width=32,
             state="readonly",
             style="Dark.TCombobox",
-        ).grid(row=1, column=1, padx=4, sticky="w")
+        )
+        self._struct_dd.grid(row=1, column=1, padx=4, sticky="w")
 
         # ── Options ───────────────────────────────────────────────────────────
         section_label(self, "  Options").pack(fill="x", padx=16, pady=(12, 0))
@@ -172,3 +174,19 @@ class FilesTab(tk.Frame):
         p = filedialog.askdirectory(title="Select RAM Concept 'python' folder")
         if p:
             self.app.v_api_path.set(p)
+            # Trigger enum discovery from the real API
+            self.app._try_discover_api_enums()
+
+    def refresh_dropdowns(self):
+        """Refresh design code and structure type dropdowns with current values."""
+        code_keys = list(DESIGN_CODES.keys())
+        struct_keys = list(STRUCTURE_TYPES.keys())
+
+        self._code_dd["values"] = code_keys
+        self._struct_dd["values"] = struct_keys
+
+        # If current selection is not in the new list, pick the first
+        if self.app.v_design_code.get() not in code_keys and code_keys:
+            self.app.v_design_code.set(code_keys[0])
+        if self.app.v_struct_type.get() not in struct_keys and struct_keys:
+            self.app.v_struct_type.set(struct_keys[0])

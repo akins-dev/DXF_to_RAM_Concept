@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project — user-specific config
+config.json
+
+# RAM Concept output
+*.cpt
+*.cptx
+
+# DXF test files (keep yours, ignore others)
+# *.dxf
+
+# Logs
+*.log

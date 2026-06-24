@@ -8,25 +8,58 @@ for the DXF → RAM Concept importer.
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
-# Design code registry — human label → RAM Concept API enum member name
+# Design code & structure type registries
+#
+# At runtime, these are populated from the actual RAM Concept API via
+# core.api_discovery. The hardcoded values below are only used as a
+# FALLBACK when the API is not importable (e.g. for preview-only mode
+# or running on a machine without RAM Concept installed).
 # ---------------------------------------------------------------------------
 
-DESIGN_CODES: dict[str, str] = {
-    "ACI 318-14 (SI)": "ACI318_14SI",
-    "ACI 318-19 (SI)": "ACI318_19SI",
-    "ACI 318-99 (US)": "ACI318_99US",
-    "AS 3600-2009": "AS3600_09",
-    "AS 3600-2018": "AS3600_18",
-    "Eurocode 2-2004": "EC2_04SI",
-    "BS 8110:1997": "BS8110_97SI",
-    "CAN/CSA A23.3-04": "CSA_A23_04SI",
-    "IS 456:2000": "IS456_00SI",
+# Fallback values — used only when RAM Concept API is not available
+_FALLBACK_DESIGN_CODES: dict[str, str] = {
+    "ACI 318-14 (SI)":   "ACI318_14_SI",
+    "ACI 318-19 (SI)":   "ACI318_19_SI",
+    "ACI 318-14 (US)":   "ACI318_14_US",
+    "ACI 318-19 (US)":   "ACI318_19_US",
+    "AS 3600-2009":      "AS3600_2009",
+    "AS 3600-2018":      "AS3600_2018",
+    "Eurocode 2-2004":   "EC2_2004",
+    "BS 8110:1997":      "BS8110_1997",
+    "CAN/CSA A23.3-04":  "CSA_A23_3_04",
+    "IS 456:2000":       "IS456_2000",
 }
 
-STRUCTURE_TYPES: dict[str, str] = {
+_FALLBACK_STRUCTURE_TYPES: dict[str, str] = {
     "Elevated slab": "ELEVATED",
     "Mat / Raft foundation": "MAT",
 }
+
+# These are the active registries — updated by load_api_enums()
+DESIGN_CODES: dict[str, str] = dict(_FALLBACK_DESIGN_CODES)
+STRUCTURE_TYPES: dict[str, str] = dict(_FALLBACK_STRUCTURE_TYPES)
+
+
+def load_api_enums(api_path: str = "") -> bool:
+    """Discover enum values from the actual RAM Concept API.
+    
+    Replaces the fallback values in DESIGN_CODES and STRUCTURE_TYPES
+    with the real API enum members. Returns True if discovery succeeded.
+    """
+    from core.api_discovery import get_design_codes, get_structure_types, reset_cache
+
+    reset_cache()
+    codes = get_design_codes(api_path)
+    types = get_structure_types(api_path)
+
+    if codes:
+        DESIGN_CODES.clear()
+        DESIGN_CODES.update(codes)
+    if types:
+        STRUCTURE_TYPES.clear()
+        STRUCTURE_TYPES.update(types)
+
+    return bool(codes or types)
 
 # ---------------------------------------------------------------------------
 # Unit scales — DXF drawing units → conversion factor to metres

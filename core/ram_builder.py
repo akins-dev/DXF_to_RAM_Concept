@@ -82,14 +82,25 @@ class BuildSummary:
 
 
 def _get_concrete(concretes, name: str):
-    """Look up a concrete mix by name."""
+    """Look up a concrete mix by name. Raises on mismatch."""
     try:
-        return concretes.concrete(name)
+        result = concretes.concrete(name)
     except Exception as exc:
         raise ValueError(
             f"Concrete mix '{name}' not found in model. "
             "Ensure add_concrete_mix() was called first."
         ) from exc
+
+    if result is None:
+        # List available concrete names for debugging
+        available = [c.name for c in concretes.concretes]
+        raise ValueError(
+            f"Concrete mix '{name}' not found in model. "
+            f"Available: {available}. "
+            "Check that the concrete_name in your element spec matches "
+            "the name in the Materials tab."
+        )
+    return result
 
 
 def _polygon_to_polygon2d(Polygon2D, Point2D, pts):
@@ -108,11 +119,23 @@ def add_concrete_mix(
     concrete_spec: ConcreteSpec,
     delete_others: bool = True,
 ) -> str:
-    """Add a concrete mix to the model. Returns the concrete name."""
+    """Add a concrete mix to the model. Returns the concrete name.
+    
+    fc values must be in MPa (e.g. 45, not 45000000).
+    """
     concretes = model.concretes
     c = concretes.add_concrete(concrete_spec.name)
-    c.fc_final = concrete_spec.fc_final
-    c.fc_initial = concrete_spec.fc_initial
+
+    # Guard: if fc looks like Pa instead of MPa, auto-correct
+    fc_final = concrete_spec.fc_final
+    fc_initial = concrete_spec.fc_initial
+    if fc_final > 1000:
+        fc_final = fc_final / 1e6
+    if fc_initial > 1000:
+        fc_initial = fc_initial / 1e6
+
+    c.fc_final = fc_final
+    c.fc_initial = fc_initial
     c.poissons_ratio = concrete_spec.poissons_ratio
     c.unit_mass = concrete_spec.unit_mass
     try:

@@ -32,7 +32,7 @@ from gui.tabs.loads_tab import LoadsTab
 from gui.tabs.materials_tab import MaterialsTab
 from gui.tabs.log_tab import LogTab
 
-from core.constants import UNIT_SCALES, DESIGN_CODES, STRUCTURE_TYPES
+from core.constants import UNIT_SCALES, DESIGN_CODES, STRUCTURE_TYPES, load_api_enums
 from core.models import (
     ProjectConfig,
     LayerInstance,
@@ -43,6 +43,23 @@ from core.layer_parser import parse_all_layers, create_layer_instances
 from core.dxf_reader import import_dxf, list_layers, ImportResult
 
 CONFIG_FILE = Path(__file__).resolve().parent.parent / "config.json"
+
+
+def _safe_enum_lookup(enum_class, name: str, label: str):
+    """Look up an enum member by name, with a helpful error on mismatch.
+    
+    Lists all valid members so the user can fix core/constants.py.
+    """
+    try:
+        return getattr(enum_class, name)
+    except AttributeError:
+        members = [m for m in dir(enum_class)
+                   if not m.startswith("_") and m[0].isupper()]
+        raise AttributeError(
+            f"{label} has no member '{name}'.\n"
+            f"Valid members: {', '.join(sorted(members))}\n"
+            f"Fix the mapping in core/constants.py to use one of these."
+        )
 
 
 class App(tk.Tk):
@@ -73,6 +90,9 @@ class App(tk.Tk):
         # ── Load config ───────────────────────────────────────────────────────
         self._load_config()
 
+        # ── Discover API enums ────────────────────────────────────────────────
+        self._try_discover_api_enums()
+
         # ── State ─────────────────────────────────────────────────────────────
         self._import_result: ImportResult | None = None
         self._layer_instances: list[LayerInstance] = []
@@ -94,9 +114,12 @@ class App(tk.Tk):
         self.v_mesh_after = tk.BooleanVar(value=True)
         self.v_headless = tk.BooleanVar(value=True)
         # Concrete
-        self.v_conc_name = tk.StringVar(value="45 MPa")
-        self.v_fc_final = tk.StringVar(value="45e6")
-        self.v_fc_initial = tk.StringVar(value="30e6")
+        self.v_conc_name = tk.StringVar(value="C45")
+        self.v_fc_final = tk.StringVar(value="45")
+        self.v_fc_initial = tk.StringVar(value="30")
+
+        # Auto-derive concrete name from fc_final
+        self.v_fc_final.trace_add("write", self._on_fc_final_changed)
         self.v_poisson = tk.StringVar(value="0.2")
         self.v_unit_mass = tk.StringVar(value="2450")
         self.v_unit_mass_loads = tk.StringVar(value="2500")
@@ -107,10 +130,10 @@ class App(tk.Tk):
         self.v_pt_duct = tk.StringVar(value="4s Flat")
         self.v_pt_anchor = tk.StringVar(value="FA Multi")
         self.v_pt_aps = tk.StringVar(value="100e-6")
-        self.v_pt_eps = tk.StringVar(value="195000e6")
-        self.v_pt_fse = tk.StringVar(value="1100e6")
-        self.v_pt_fpy = tk.StringVar(value="1564e6")
-        self.v_pt_fpu = tk.StringVar(value="1840e6")
+        self.v_pt_eps = tk.StringVar(value="195000")
+        self.v_pt_fse = tk.StringVar(value="1100")
+        self.v_pt_fpy = tk.StringVar(value="1564")
+        self.v_pt_fpu = tk.StringVar(value="1840")
         self.v_pt_duct_w = tk.StringVar(value="70e-3")
         self.v_pt_duct_h = tk.StringVar(value="35e-3")
         self.v_pt_strands = tk.StringVar(value="4")
@@ -222,6 +245,29 @@ class App(tk.Tk):
             "unit_mass_loads": self.v_unit_mass_loads,
             "use_code_ec": self.v_use_code_ec,
         }
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # API Enum Discovery
+    # ══════════════════════════════════════════════════════════════════════════
+
+    def _try_discover_api_enums(self):
+        """Discover design code / structure type enums from the API.
+        
+        Called at startup and whenever the API path changes.
+        Updates the dropdown values in the Files tab.
+        """
+        api_path = self.v_api_path.get().strip()
+        try:
+            found = load_api_enums(api_path)
+            if found:
+                self._refresh_enum_dropdowns()
+        except Exception:
+            pass  # API not available — fallback values stay
+
+    def _refresh_enum_dropdowns(self):
+        """Refresh design code and structure type dropdowns with discovered values."""
+        if hasattr(self, 'files_tab') and self.files_tab:
+            self.files_tab.refresh_dropdowns()
 
     # ══════════════════════════════════════════════════════════════════════════
     # Actions
@@ -426,6 +472,9 @@ class App(tk.Tk):
                 "'python' subfolder inside your RAM Concept install."
             ) from exc
 
+        # Refresh enums from the real API now that it's imported
+        load_api_enums(api_path)
+
         # 2. Parse DXF
         dxf_path = self.v_dxf.get().strip()
         unit_scale = self._get_unit_scale()
@@ -472,11 +521,13 @@ class App(tk.Tk):
             # Design code & structure type
             dc_str = DESIGN_CODES[config.design_code]
             st_str = STRUCTURE_TYPES[config.structure_type]
-            dc_enum = getattr(DesignCode, dc_str)
-            st_enum = getattr(StructureType, st_str)
+
+            dc_enum = _safe_enum_lookup(DesignCode, dc_str, "DesignCode")
+            st_enum = _safe_enum_lookup(StructureType, st_str, "StructureType")
+
             model.setup_new_model(dc_enum, st_enum)
-            self._log(f"  Design code: {config.design_code}")
-            self._log(f"  Structure type: {config.structure_type}")
+            self._log(f"  Design code: {config.design_code} → {dc_str}")
+            self._log(f"  Structure type: {config.structure_type} → {st_str}")
 
             # 5. Add concrete
             from core.ram_builder import add_concrete_mix, build_structure
@@ -529,6 +580,4 @@ class App(tk.Tk):
                 self._log(f"  ⚠ {len(build_summary.errors)} build error(s)", "WARN")
 
         finally:
-            self._log("Shutting down RAM Concept…", "INFO")
-            concept.shut_down()
-            self._log("Done.", "INFO")
+            sel
