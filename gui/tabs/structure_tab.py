@@ -190,6 +190,10 @@ class StructureTab(tk.Frame):
             row["thickness"] = str(spec.thickness)
         if hasattr(spec, "toc"):
             row["toc"] = str(spec.toc)
+        if hasattr(spec, "recess_depth"):
+            row["recess_depth"] = str(spec.recess_depth)
+        if hasattr(spec, "slab_thickness"):
+            row["slab_thickness"] = str(spec.slab_thickness)
         if hasattr(spec, "priority"):
             row["priority"] = str(spec.priority)
         if hasattr(spec, "axis"):
@@ -267,6 +271,10 @@ class StructureTab(tk.Frame):
             spec.thickness = fval("thickness", spec.thickness)
         if hasattr(spec, "toc"):
             spec.toc = fval("toc", spec.toc)
+        if hasattr(spec, "recess_depth"):
+            spec.recess_depth = fval("recess_depth", spec.recess_depth)
+        if hasattr(spec, "slab_thickness"):
+            spec.slab_thickness = fval("slab_thickness", spec.slab_thickness)
         if hasattr(spec, "priority"):
             spec.priority = ival("priority", spec.priority)
         if hasattr(spec, "axis"):
