@@ -44,6 +44,7 @@ from core.models import (
     DropPanelSpec,
     AreaSpringSpec,
     ConcreteSpec,
+    PTSystemSpec,
 )
 from core.constants import DESIGN_CODES, STRUCTURE_TYPES
 
@@ -160,6 +161,139 @@ def add_concrete_mix(
 
 # ── Main builder ──────────────────────────────────────────────────────────────
 
+
+
+def _collection_item(collection, finder_name: str, adder_name: str, item_name: str):
+    """Find a named RAM Concept collection item, or create it if absent."""
+    finder = getattr(collection, finder_name)
+    try:
+        item = finder(item_name)
+        if item is not None:
+            return item
+    except Exception:
+        pass
+    return getattr(collection, adder_name)(item_name)
+
+
+def _enum_member(enum_class, name: str):
+    try:
+        return getattr(enum_class, name)
+    except AttributeError as exc:
+        members = [m for m in dir(enum_class) if not m.startswith("_") and m[0].isupper()]
+        raise ValueError(
+            f"{enum_class.__name__} has no member '{name}'. Valid members: {', '.join(sorted(members))}"
+        ) from exc
+
+
+def _set_attr(obj, attr: str, value, log: Callable[[str], None], label: str):
+    try:
+        setattr(obj, attr, value)
+    except Exception as exc:
+        log(f"  PT warning: could not set {label}.{attr}: {exc}")
+
+
+def add_pt_system_definition(
+    model,
+    pt_spec: PTSystemSpec,
+    log: Callable[[str], None] = print,
+):
+    """Create/update RAM Concept PT definition objects when PT is enabled.
+
+    RAM Concept separates PT data into StrandMaterial, DuctSystem,
+    AnchorSystem, and PTSystem. The PTSystem links the other three.
+    Tendon geometry is not generated here; this only prepares the named
+    definitions that tendons can use later.
+    """
+    if not pt_spec.use_pt_system:
+        log("  PT system disabled - no PT definitions created.")
+        return None
+
+    from ram_concept.anchor_system import AnchorType
+    from ram_concept.duct_system import DuctShape, DuctType, PTSystemType
+
+    strand = None
+    duct = None
+    anchor = None
+
+    if pt_spec.use_strand_material:
+        strand = _collection_item(
+            model.strand_materials,
+            "strand_material",
+            "add_strand_material",
+            pt_spec.strand_name,
+        )
+        _set_attr(strand, "Aps", pt_spec.aps, log, pt_spec.strand_name)
+        _set_attr(strand, "Eps", pt_spec.eps, log, pt_spec.strand_name)
+        _set_attr(strand, "Fpy", pt_spec.fpy, log, pt_spec.strand_name)
+        _set_attr(strand, "Fpu", pt_spec.fpu, log, pt_spec.strand_name)
+        log(f"  PT strand material ready: {pt_spec.strand_name}")
+    else:
+        try:
+            strand = model.strand_materials.strand_material(pt_spec.strand_name)
+        except Exception:
+            strand = None
+
+    if pt_spec.use_duct_system:
+        duct = _collection_item(
+            model.duct_systems,
+            "duct_system",
+            "add_duct_system",
+            pt_spec.duct_name,
+        )
+        _set_attr(duct, "system_type", _enum_member(PTSystemType, pt_spec.system_type), log, pt_spec.duct_name)
+        _set_attr(duct, "duct_shape", _enum_member(DuctShape, pt_spec.duct_shape), log, pt_spec.duct_name)
+        _set_attr(duct, "duct_type", _enum_member(DuctType, pt_spec.duct_type), log, pt_spec.duct_name)
+        _set_attr(duct, "duct_width", pt_spec.duct_width, log, pt_spec.duct_name)
+        _set_attr(duct, "duct_height", pt_spec.duct_height, log, pt_spec.duct_name)
+        _set_attr(duct, "strands_per_duct", pt_spec.strands_per_duct, log, pt_spec.duct_name)
+        _set_attr(duct, "angular_friction", pt_spec.angular_friction, log, pt_spec.duct_name)
+        _set_attr(duct, "wobble_friction", pt_spec.wobble_friction, log, pt_spec.duct_name)
+        log(f"  PT duct system ready: {pt_spec.duct_name}")
+    else:
+        try:
+            duct = model.duct_systems.duct_system(pt_spec.duct_name)
+        except Exception:
+            duct = None
+
+    if pt_spec.use_anchor_system:
+        anchor = _collection_item(
+            model.anchor_systems,
+            "anchor_system",
+            "add_anchor_system",
+            pt_spec.anchor_name,
+        )
+        _set_attr(anchor, "anchor_type", _enum_member(AnchorType, pt_spec.anchor_type), log, pt_spec.anchor_name)
+        _set_attr(anchor, "anchor_friction", pt_spec.anchor_friction, log, pt_spec.anchor_name)
+        _set_attr(anchor, "jack_stress", pt_spec.jack_stress, log, pt_spec.anchor_name)
+        _set_attr(anchor, "seating_distance", pt_spec.seating_distance, log, pt_spec.anchor_name)
+        log(f"  PT anchor system ready: {pt_spec.anchor_name}")
+    else:
+        try:
+            anchor = model.anchor_systems.anchor_system(pt_spec.anchor_name)
+        except Exception:
+            anchor = None
+
+    pt = _collection_item(model.pt_systems, "pt_system", "add_pt_system", pt_spec.pt_name)
+    if strand is not None:
+        _set_attr(pt, "strand_material", strand, log, pt_spec.pt_name)
+    elif pt_spec.use_strand_material:
+        raise ValueError(f"PT strand material '{pt_spec.strand_name}' was not available.")
+
+    if duct is not None:
+        _set_attr(pt, "duct_system", duct, log, pt_spec.pt_name)
+    elif pt_spec.use_duct_system:
+        raise ValueError(f"PT duct system '{pt_spec.duct_name}' was not available.")
+
+    if anchor is not None:
+        _set_attr(pt, "anchor_system", anchor, log, pt_spec.pt_name)
+    elif pt_spec.use_anchor_system:
+        raise ValueError(f"PT anchor system '{pt_spec.anchor_name}' was not available.")
+
+    _set_attr(pt, "Fse", pt_spec.fse, log, pt_spec.pt_name)
+    _set_attr(pt, "long_term_losses", pt_spec.long_term_losses, log, pt_spec.pt_name)
+    _set_attr(pt, "min_curvature_radius", pt_spec.min_curvature_radius, log, pt_spec.pt_name)
+    log(f"  PT system ready: {pt_spec.pt_name}")
+    return pt
 
 def build_structure(
     model,

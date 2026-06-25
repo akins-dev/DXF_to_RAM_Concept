@@ -125,6 +125,10 @@ class App(tk.Tk):
         self.v_unit_mass_loads = tk.StringVar(value="2500")
         self.v_use_code_ec = tk.BooleanVar(value=True)
         # PT System
+        self.v_use_pt_system = tk.BooleanVar(value=False)
+        self.v_use_pt_strand = tk.BooleanVar(value=True)
+        self.v_use_pt_duct = tk.BooleanVar(value=True)
+        self.v_use_pt_anchor = tk.BooleanVar(value=True)
         self.v_pt_name = tk.StringVar(value="13mm Bonded")
         self.v_pt_strand = tk.StringVar(value="13mm Strand")
         self.v_pt_duct = tk.StringVar(value="4s Flat")
@@ -141,6 +145,13 @@ class App(tk.Tk):
         self.v_pt_duct_shape = tk.StringVar(value="FLAT")
         self.v_pt_duct_type = tk.StringVar(value="CORRUGATED_STEEL")
         self.v_pt_anchor_type = tk.StringVar(value="FLAT_MULTI_PLANE")
+        self.v_pt_min_radius = tk.StringVar(value="2.0")
+        self.v_pt_anchor_friction = tk.StringVar(value="0.02")
+        self.v_pt_angular_friction = tk.StringVar(value="0.2")
+        self.v_pt_jack_stress = tk.StringVar(value="1564")
+        self.v_pt_seating_distance = tk.StringVar(value="6e-3")
+        self.v_pt_long_losses = tk.StringVar(value="150")
+        self.v_pt_wobble_friction = tk.StringVar(value="0.005")
         self.v_status = tk.StringVar(value="Select a DXF file, then process layers.")
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -253,6 +264,33 @@ class App(tk.Tk):
             "unit_mass": self.v_unit_mass,
             "unit_mass_loads": self.v_unit_mass_loads,
             "use_code_ec": self.v_use_code_ec,
+            "use_pt_system": self.v_use_pt_system,
+            "use_pt_strand": self.v_use_pt_strand,
+            "use_pt_duct": self.v_use_pt_duct,
+            "use_pt_anchor": self.v_use_pt_anchor,
+            "pt_name": self.v_pt_name,
+            "pt_strand": self.v_pt_strand,
+            "pt_duct": self.v_pt_duct,
+            "pt_anchor": self.v_pt_anchor,
+            "pt_aps": self.v_pt_aps,
+            "pt_eps": self.v_pt_eps,
+            "pt_fse": self.v_pt_fse,
+            "pt_fpy": self.v_pt_fpy,
+            "pt_fpu": self.v_pt_fpu,
+            "pt_duct_w": self.v_pt_duct_w,
+            "pt_duct_h": self.v_pt_duct_h,
+            "pt_strands": self.v_pt_strands,
+            "pt_sys_type": self.v_pt_sys_type,
+            "pt_duct_shape": self.v_pt_duct_shape,
+            "pt_duct_type": self.v_pt_duct_type,
+            "pt_anchor_type": self.v_pt_anchor_type,
+            "pt_min_radius": self.v_pt_min_radius,
+            "pt_anchor_friction": self.v_pt_anchor_friction,
+            "pt_angular_friction": self.v_pt_angular_friction,
+            "pt_jack_stress": self.v_pt_jack_stress,
+            "pt_seating_distance": self.v_pt_seating_distance,
+            "pt_long_losses": self.v_pt_long_losses,
+            "pt_wobble_friction": self.v_pt_wobble_friction,
         }
 
     def _on_fc_final_changed(self, *args):
@@ -551,12 +589,26 @@ class App(tk.Tk):
             self._log(f"  Design code: {config.design_code} → {dc_str}")
             self._log(f"  Structure type: {config.structure_type} → {st_str}")
 
-            # 5. Add concrete
-            from core.ram_builder import add_concrete_mix, build_structure
+            # 5. Add concrete and optional PT definitions
+            from core.ram_builder import (
+                add_concrete_mix,
+                add_pt_system_definition,
+                build_structure,
+            )
             from core.ram_loader import apply_loads
 
             self._log(f"  Adding concrete: {config.concrete.name}", "INFO")
             add_concrete_mix(model, config.concrete)
+
+            if config.pt_system.use_pt_system:
+                self._log(f"  Adding PT system: {config.pt_system.pt_name}", "INFO")
+                add_pt_system_definition(
+                    model,
+                    config.pt_system,
+                    log=lambda m: self._log(m),
+                )
+            else:
+                self._log("  PT system disabled - skipping PT definitions.", "INFO")
 
             # 6. Build structure
             self._log("--- Building structure ---", "INFO")

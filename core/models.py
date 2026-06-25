@@ -294,6 +294,10 @@ class PTSystemSpec:
     Stress values in MPa, areas in m², lengths in m.
     """
 
+    use_pt_system: bool = False
+    use_strand_material: bool = True
+    use_duct_system: bool = True
+    use_anchor_system: bool = True
     pt_name: str = "13mm Bonded"
     strand_name: str = "13mm Strand"
     duct_name: str = "4s Flat"

@@ -237,7 +237,20 @@ Examples:
 | Unit Mass for Loads (kg/m³) | For self-weight | 2500 |
 | Use Code Ec | Use design code's Ec formula | Yes |
 
-**PT System** fields are for future use.
+**Post-tensioning properties:**
+
+The **Use PT** toggle controls whether post-tensioning definition objects are created in RAM Concept. When it is off, no PT system, strand material, duct system, or anchor system is added by the importer.
+
+RAM Concept stores this data as linked objects:
+
+| Section | RAM Concept object | Used for |
+|---------|--------------------|----------|
+| Post-Tensioning System | `PTSystem` | Named PT system that links the strand, duct, and anchor definitions |
+| Strand Material | `StrandMaterial` | Strand area, modulus, yield strength, and ultimate strength |
+| Duct System | `DuctSystem` | Bond type, duct shape/type, duct dimensions, strands per duct, and friction values |
+| Anchor System | `AnchorSystem` | Anchorage type, jack stress, anchor friction, and seating distance |
+
+The system, duct shape, duct type, and anchor type fields are dropdowns because RAM Concept defines them as fixed enum values. The name fields are editable because they may refer to new or existing named objects in the RAM Concept model.
 
 ### 6.5 Tab: Log
 
