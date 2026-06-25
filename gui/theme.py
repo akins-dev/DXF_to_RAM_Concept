@@ -17,6 +17,7 @@ C_TEXT = "#E2E8F0"  # primary text
 C_MUTED = "#94A3B8"  # muted/secondary text
 C_SUCCESS = "#4ADE80"  # success green
 C_WARN = "#FACC15"  # warning yellow
+C_TIP = "#EAB308"  # tip / instruction text (amber-yellow)
 C_ERROR = "#F87171"  # error red
 C_ENTRY_BG = "#2D3A52"  # entry field background
 C_BORDER = "#3B4A6A"  # borders and separators

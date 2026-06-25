@@ -98,7 +98,7 @@ class LoadsTab(tk.Frame):
                 f"Double-click cells to edit. "
                 f"Values format: Fx,Fy,Fz,Mx,My  (e.g. 0,0,-5.0,0,0).  "
                 f"Units \u2014 {unit_hint}",
-                fg=C_MUTED,
+                fg=C_TIP,
                 font=("Segoe UI", 8, "italic"),
             ).pack(fill="x", padx=8, pady=(6, 2))
 
@@ -174,4 +174,4 @@ class LoadsTab(tk.Frame):
         except Exception:
             pass
 
-        spec.live_load_type = row.get("live_load_type", "Unreducible")
+        spec.live_load_type = row.get("live_load_type", "Reducible")

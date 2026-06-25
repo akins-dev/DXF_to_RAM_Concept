@@ -29,8 +29,8 @@ class ColumnShape(Enum):
 
 
 class LiveLoadType(Enum):
-    UNREDUCIBLE = "Unreducible"
     REDUCIBLE = "Reducible"
+    UNREDUCIBLE = "Unreducible"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -244,7 +244,7 @@ class LineLoadSpec:
     value_dead: LoadValues = field(default_factory=LoadValues)
     elevation_live: float = 0.0
     value_live: LoadValues = field(default_factory=LoadValues)
-    live_load_type: str = "Unreducible"
+    live_load_type: str = "Reducible"
 
 
 @dataclass
@@ -255,7 +255,7 @@ class AreaLoadSpec:
     value_dead: LoadValues = field(default_factory=LoadValues)
     elevation_live: float = 0.0
     value_live: LoadValues = field(default_factory=LoadValues)
-    live_load_type: str = "Unreducible"
+    live_load_type: str = "Reducible"
 
 
 @dataclass
@@ -266,7 +266,7 @@ class PointLoadSpec:
     value_dead: LoadValues = field(default_factory=LoadValues)
     elevation_live: float = 0.0
     value_live: LoadValues = field(default_factory=LoadValues)
-    live_load_type: str = "Unreducible"
+    live_load_type: str = "Reducible"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

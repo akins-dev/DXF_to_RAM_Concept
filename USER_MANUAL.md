@@ -212,7 +212,7 @@ Sub-tabs for Line Load, Area Load, and Point Load. Each row represents one DXF l
 | Value Dead | Dead load force components | `Fx,Fy,Fz,Mx,My` |
 | Elevation Live | Height above slab for live loads (m) | Number |
 | Value Live | Live load force components | `Fx,Fy,Fz,Mx,My` |
-| Live Load Type | Reducible or Unreducible | Dropdown |
+| Live Load Type | Reducible or Unreducible; defaults to Reducible | Dropdown |
 
 **Load values format:** Comma-separated: `Fx,Fy,Fz,Mx,My`
 

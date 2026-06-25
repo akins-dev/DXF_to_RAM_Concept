@@ -120,4 +120,4 @@ ALL_ROLES = STRUCTURAL_ROLES + LOAD_ROLES
 # Live load type options
 # ---------------------------------------------------------------------------
 
-LIVE_LOAD_TYPES = ["Unreducible", "Reducible"]
+LIVE_LOAD_TYPES = ["Reducible", "Unreducible"]
