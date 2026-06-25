@@ -163,7 +163,7 @@ class MaterialsTab(tk.Frame):
         grid.pack(fill="x", padx=14, pady=(0, 12))
         fields = [
             ("Strand name", styled_entry(grid, self.app.v_pt_strand, width=24), ""),
-            ("Area Aps", styled_entry(grid, self.app.v_pt_aps, width=24), "m2"),
+            ("Area Aps", styled_entry(grid, self.app.v_pt_aps, width=24), "mm2"),
             ("Elastic modulus Eps", styled_entry(grid, self.app.v_pt_eps, width=24), "MPa"),
             ("Yield strength Fpy", styled_entry(grid, self.app.v_pt_fpy, width=24), "MPa"),
             ("Ultimate strength Fpu", styled_entry(grid, self.app.v_pt_fpu, width=24), "MPa"),
@@ -180,8 +180,8 @@ class MaterialsTab(tk.Frame):
             ("System type", self._combo(grid, self.app.v_pt_sys_type, SYSTEM_TYPES), ""),
             ("Duct shape", self._combo(grid, self.app.v_pt_duct_shape, DUCT_SHAPES), ""),
             ("Duct type", self._combo(grid, self.app.v_pt_duct_type, DUCT_TYPES), ""),
-            ("Duct width", styled_entry(grid, self.app.v_pt_duct_w, width=24), "m"),
-            ("Duct height", styled_entry(grid, self.app.v_pt_duct_h, width=24), "m"),
+            ("Duct width", styled_entry(grid, self.app.v_pt_duct_w, width=24), "mm"),
+            ("Duct height", styled_entry(grid, self.app.v_pt_duct_h, width=24), "mm"),
             ("Strands per duct", styled_entry(grid, self.app.v_pt_strands, width=24), ""),
             ("Angular friction", styled_entry(grid, self.app.v_pt_angular_friction, width=24), ""),
             ("Wobble friction", styled_entry(grid, self.app.v_pt_wobble_friction, width=24), ""),
@@ -200,7 +200,7 @@ class MaterialsTab(tk.Frame):
             ("Anchor type", self._combo(grid, self.app.v_pt_anchor_type, ANCHOR_TYPES), ""),
             ("Jack stress", styled_entry(grid, self.app.v_pt_jack_stress, width=24), "MPa"),
             ("Anchor friction", styled_entry(grid, self.app.v_pt_anchor_friction, width=24), ""),
-            ("Seating distance", styled_entry(grid, self.app.v_pt_seating_distance, width=24), "m"),
+            ("Seating distance", styled_entry(grid, self.app.v_pt_seating_distance, width=24), "mm"),
         ]
         for r, (label, widget, unit) in enumerate(fields):
             column_offset = 0 if r < 3 else 3
