@@ -31,10 +31,27 @@ class MaterialsTab(tk.Frame):
         canvas.pack(fill="both", expand=True)
 
         inner = tk.Frame(canvas, bg=C_PANEL)
-        canvas.create_window((0, 0), window=inner, anchor="nw")
-        inner.bind(
-            "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
+        inner_window = canvas.create_window((0, 0), window=inner, anchor="nw")
+
+        def update_scroll_region(_event=None):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+
+        def resize_inner(event):
+            canvas.itemconfigure(inner_window, width=event.width)
+
+        def on_mousewheel(event):
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        def bind_mousewheel(_event=None):
+            canvas.bind_all("<MouseWheel>", on_mousewheel)
+
+        def unbind_mousewheel(_event=None):
+            canvas.unbind_all("<MouseWheel>")
+
+        inner.bind("<Configure>", update_scroll_region)
+        canvas.bind("<Configure>", resize_inner)
+        canvas.bind("<Enter>", bind_mousewheel)
+        canvas.bind("<Leave>", unbind_mousewheel)
 
         # ── Concrete Data ─────────────────────────────────────────────────────
         section_label(inner, "  Concrete Data").pack(fill="x", padx=16, pady=(12, 0))

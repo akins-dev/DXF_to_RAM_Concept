@@ -18,6 +18,10 @@ from gui.widgets import (
     styled_label,
     styled_btn,
     section_label,
+    panel,
+    panel_title,
+    field_row,
+    notice,
 )
 from core.constants import DESIGN_CODES, STRUCTURE_TYPES, UNIT_SCALES
 
@@ -31,117 +35,115 @@ class FilesTab(tk.Frame):
         self._build()
 
     def _build(self):
-        # ── File Paths ────────────────────────────────────────────────────────
-        section_label(self, "  File Paths").pack(fill="x", padx=16, pady=(12, 0))
-        f = tk.Frame(self, bg=C_PANEL)
-        f.pack(fill="x", padx=16, pady=6)
+        outer = tk.Frame(self, bg=C_PANEL)
+        outer.pack(fill="both", expand=True, padx=14, pady=12)
+        outer.columnconfigure(0, weight=3)
+        outer.columnconfigure(1, weight=2)
+
+        left = tk.Frame(outer, bg=C_PANEL)
+        left.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        right = tk.Frame(outer, bg=C_PANEL)
+        right.grid(row=0, column=1, sticky="nsew")
+
+        # Project files
+        file_panel = panel(left)
+        file_panel.pack(fill="x", pady=(0, 10))
+        panel_title(
+            file_panel,
+            "Project Files",
+            "Choose the DXF source, output Concept file, and RAM Concept API Python folder.",
+        ).pack(fill="x", padx=14, pady=(12, 8))
+        f = tk.Frame(file_panel, bg=C_SURFACE)
+        f.pack(fill="x", padx=14, pady=(0, 14))
         f.columnconfigure(1, weight=1)
 
         rows = [
-            ("DXF input file:", self.app.v_dxf, self._browse_dxf),
-            ("Output .cpt file:", self.app.v_output, self._browse_cpt),
-            ("RAM Concept API folder:", self.app.v_api_path, self._browse_api),
+            ("DXF input", self.app.v_dxf, self._browse_dxf, "Browse"),
+            ("Output .cpt", self.app.v_output, self._browse_cpt, "Save As"),
+            ("RAM API folder", self.app.v_api_path, self._browse_api, "Browse"),
         ]
-        for r, (label, var, cmd) in enumerate(rows):
-            tk.Label(f, text=label, bg=C_PANEL, fg=C_MUTED, width=28, anchor="w").grid(
-                row=r, column=0, sticky="w", padx=8, pady=3
+        for r, (label, var, cmd, btn_text) in enumerate(rows):
+            tk.Label(f, text=label, bg=C_SURFACE, fg=C_MUTED, anchor="w").grid(
+                row=r, column=0, sticky="w", padx=(0, 10), pady=5
             )
-            styled_entry(f, var, width=42).grid(row=r, column=1, sticky="we", padx=4)
-            styled_btn(f, "…", cmd).grid(row=r, column=2, padx=4)
+            styled_entry(f, var, width=42).grid(row=r, column=1, sticky="we", pady=5)
+            styled_btn(f, btn_text, cmd).grid(row=r, column=2, padx=(8, 0), pady=5)
 
-        # ── Units ─────────────────────────────────────────────────────────────
-        section_label(self, "  Units & Scale").pack(fill="x", padx=16, pady=(12, 0))
-        uf = tk.Frame(self, bg=C_PANEL)
-        uf.pack(fill="x", padx=16, pady=6)
+        # Model setup
+        model_panel = panel(left)
+        model_panel.pack(fill="x", pady=(0, 10))
+        panel_title(
+            model_panel,
+            "Model Setup",
+            "Match the drawing units before scanning. The importer converts geometry to RAM Concept meters.",
+        ).pack(fill="x", padx=14, pady=(12, 8))
+        mf = tk.Frame(model_panel, bg=C_SURFACE)
+        mf.pack(fill="x", padx=14, pady=(0, 14))
 
-        tk.Label(uf, text="DXF drawing units:", bg=C_PANEL, fg=C_MUTED).grid(
-            row=0, column=0, sticky="w", padx=8
-        )
         unit_dd = ttk.Combobox(
-            uf,
+            mf,
             textvariable=self.app.v_unit_key,
             values=list(UNIT_SCALES.keys()),
             width=24,
             state="readonly",
             style="Dark.TCombobox",
         )
-        unit_dd.grid(row=0, column=1, padx=4, sticky="w")
+        field_row(mf, 0, "DXF units", unit_dd)
         unit_dd.bind("<<ComboboxSelected>>", lambda e: self._on_unit_change())
 
-        self._custom_lbl = tk.Label(uf, text="Custom scale:", bg=C_PANEL, fg=C_MUTED)
-        self._custom_ent = styled_entry(uf, self.app.v_unit_custom, width=10)
+        self._custom_lbl = tk.Label(mf, text="Custom scale", bg=C_SURFACE, fg=C_MUTED)
+        self._custom_ent = styled_entry(mf, self.app.v_unit_custom, width=12)
         self._on_unit_change()
 
-        # ── Design Code ───────────────────────────────────────────────────────
-        section_label(self, "  Design Code & Structure Type").pack(
-            fill="x", padx=16, pady=(12, 0)
-        )
-        df = tk.Frame(self, bg=C_PANEL)
-        df.pack(fill="x", padx=16, pady=6)
-
-        tk.Label(df, text="Design code:", bg=C_PANEL, fg=C_MUTED).grid(
-            row=0, column=0, sticky="w", padx=8
-        )
         self._code_dd = ttk.Combobox(
-            df,
+            mf,
             textvariable=self.app.v_design_code,
             values=list(DESIGN_CODES.keys()),
-            width=32,
+            width=34,
             state="readonly",
             style="Dark.TCombobox",
         )
-        self._code_dd.grid(row=0, column=1, padx=4, sticky="w")
+        field_row(mf, 2, "Design code", self._code_dd)
 
-        tk.Label(df, text="Structure type:", bg=C_PANEL, fg=C_MUTED).grid(
-            row=1, column=0, sticky="w", padx=8, pady=4
-        )
         self._struct_dd = ttk.Combobox(
-            df,
+            mf,
             textvariable=self.app.v_struct_type,
             values=list(STRUCTURE_TYPES.keys()),
-            width=32,
+            width=34,
             state="readonly",
             style="Dark.TCombobox",
         )
-        self._struct_dd.grid(row=1, column=1, padx=4, sticky="w")
+        field_row(mf, 3, "Structure type", self._struct_dd)
 
-        # ── Options ───────────────────────────────────────────────────────────
-        section_label(self, "  Options").pack(fill="x", padx=16, pady=(12, 0))
-        of = tk.Frame(self, bg=C_PANEL)
-        of.pack(fill="x", padx=16, pady=6)
+        # Options
+        option_panel = panel(right)
+        option_panel.pack(fill="x", pady=(0, 10))
+        panel_title(option_panel, "Run Options", "Control how RAM Concept is launched and finalized.").pack(
+            fill="x", padx=14, pady=(12, 8)
+        )
+        of = tk.Frame(option_panel, bg=C_SURFACE)
+        of.pack(fill="x", padx=14, pady=(0, 14))
         styled_check(of, "Generate mesh after import", self.app.v_mesh_after).pack(
-            side="left", padx=8
+            anchor="w", pady=3
         )
         styled_check(of, "Run RAM Concept headless", self.app.v_headless).pack(
-            side="left", padx=8
+            anchor="w", pady=3
         )
 
-        # ── Notes ─────────────────────────────────────────────────────────────
-        section_label(self, "  DXF Drawing Rules").pack(fill="x", padx=16, pady=(12, 0))
-        notes = tk.Frame(self, bg=C_PANEL)
-        notes.pack(fill="x", padx=16, pady=6)
-        note_text = (
-            "REMEMBER:\n"
-            "• DXF must be in the selected drawing units\n"
-            "• Layer names must contain element keywords: "
-            "slab, beam, column, wall, opening, lineload, areaload, pointload\n"
-            "• Columns: polyline for any shape, circle for circular\n"
-            "• Beams & walls: line/polyline at centerline\n"
-            "• Slabs & openings: closed polyline\n"
-            "• Line loads: line/polyline\n"
-            "• Area loads: closed polyline\n"
-            "• Point loads: point entity"
+        # Drawing rules
+        rules_panel = panel(right)
+        rules_panel.pack(fill="both", expand=True)
+        panel_title(rules_panel, "DXF Drawing Rules", "Layer names drive classification; geometry type drives extraction.").pack(
+            fill="x", padx=14, pady=(12, 8)
         )
-        tk.Label(
-            notes,
-            text=note_text,
-            bg=C_PANEL,
-            fg=C_WARN,
-            font=("Segoe UI", 8),
-            justify="left",
-            anchor="w",
-            wraplength=700,
-        ).pack(fill="x")
+        rules = (
+            "Required layer keywords: slab, beam, column, wall, opening, lineload, areaload, pointload\n"
+            "Columns: polyline for any shape, circle for circular\n"
+            "Beams and walls: line/polyline at centerline\n"
+            "Slabs, openings, area loads: closed polyline\n"
+            "Point loads: POINT entity"
+        )
+        notice(rules_panel, rules, "warn").pack(fill="x", padx=14, pady=(0, 14))
 
     def _on_unit_change(self):
         key = self.app.v_unit_key.get()

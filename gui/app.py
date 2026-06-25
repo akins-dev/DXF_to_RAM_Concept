@@ -141,29 +141,33 @@ class App(tk.Tk):
         self.v_pt_duct_shape = tk.StringVar(value="FLAT")
         self.v_pt_duct_type = tk.StringVar(value="CORRUGATED_STEEL")
         self.v_pt_anchor_type = tk.StringVar(value="FLAT_MULTI_PLANE")
+        self.v_status = tk.StringVar(value="Select a DXF file, then process layers.")
 
     # ══════════════════════════════════════════════════════════════════════════
     # Layout
     # ══════════════════════════════════════════════════════════════════════════
 
     def _build_header(self):
-        hdr = tk.Frame(self, bg=C_BG, height=50)
+        hdr = tk.Frame(self, bg=C_BG, height=78)
         hdr.pack(fill="x")
         hdr.pack_propagate(False)
+
+        title = tk.Frame(hdr, bg=C_BG)
+        title.pack(side="left", padx=16, pady=(10, 8))
         tk.Label(
-            hdr,
-            text="DXF → RAM Concept",
+            title,
+            text="DXF to RAM Concept",
             bg=C_BG,
-            fg=C_ACCENT2,
+            fg=C_TEXT,
             font=("Segoe UI", 16, "bold"),
-        ).pack(side="left", padx=16)
+        ).pack(anchor="w")
         tk.Label(
-            hdr,
-            text="v3.0 — Structural Importer",
+            title,
+            text="Scan DXF layers, review properties, then generate the RAM Concept model.",
             bg=C_BG,
-            fg=C_MUTED,
-            font=("Segoe UI", 10),
-        ).pack(side="left")
+            fg="#CBD5E1",
+            font=("Segoe UI", 9),
+        ).pack(anchor="w", pady=(3, 0))
 
     def _build_notebook(self):
         self._nb = ttk.Notebook(self, style="Dark.TNotebook")
@@ -182,23 +186,28 @@ class App(tk.Tk):
         self._nb.add(self.log_tab, text="  Log  ")
 
     def _build_footer(self):
-        ftr = tk.Frame(self, bg=C_BG, height=50)
+        ftr = tk.Frame(self, bg=C_BG, height=58)
         ftr.pack(fill="x")
         ftr.pack_propagate(False)
 
-        styled_btn(ftr, "  ⟳ Process DXF  ", self._on_process_dxf, accent=True).pack(
-            side="left", padx=16, pady=10
-        )
-        styled_btn(ftr, "  ▷ Preview  ", self._on_preview).pack(
-            side="left", padx=4, pady=10
-        )
-        styled_btn(
-            ftr, "  ▶ Generate in RAM Concept  ", self._on_run, accent=True
-        ).pack(side="right", padx=16, pady=10)
+        status = tk.Frame(ftr, bg=C_BG)
+        status.pack(side="left", fill="x", expand=True, padx=16)
+        tk.Label(
+            status,
+            textvariable=self.v_status,
+            bg=C_BG,
+            fg=C_MUTED,
+            font=("Segoe UI", 9),
+            anchor="w",
+        ).pack(fill="x", pady=18)
 
-    # ══════════════════════════════════════════════════════════════════════════
-    # Log helper
-    # ══════════════════════════════════════════════════════════════════════════
+        actions = tk.Frame(ftr, bg=C_BG)
+        actions.pack(side="right", padx=16, pady=10)
+        styled_btn(actions, "Process DXF", self._on_process_dxf, accent=True).pack(
+            side="left", padx=4
+        )
+        styled_btn(actions, "Preview", self._on_preview).pack(side="left", padx=4)
+        styled_btn(actions, "Generate", self._on_run, accent=True).pack(side="left", padx=4)
 
     def _log(self, msg: str, level: str = "NORMAL"):
         """Thread-safe log to the log tab."""

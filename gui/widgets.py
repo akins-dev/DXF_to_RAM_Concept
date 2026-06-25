@@ -32,51 +32,106 @@ def styled_entry(parent, textvariable, width=18, **kw):
 
 
 def styled_check(parent, text, variable, **kw):
+    bg = parent.cget("bg")
     return tk.Checkbutton(
         parent,
         text=text,
         variable=variable,
-        bg=C_PANEL,
+        bg=bg,
         fg=C_TEXT,
         selectcolor=C_ENTRY_BG,
-        activebackground=C_PANEL,
+        activebackground=bg,
         activeforeground=C_TEXT,
         **kw,
     )
 
 
 def styled_label(parent, text, fg=C_TEXT, **kw):
-    return tk.Label(parent, text=text, bg=C_PANEL, fg=fg, **kw)
+    return tk.Label(parent, text=text, bg=parent.cget("bg"), fg=fg, **kw)
 
 
-def styled_btn(parent, text, command, accent=False, **kw):
-    bg = C_ACCENT if accent else C_BORDER
+def styled_btn(parent, text, command, accent=False, danger=False, **kw):
+    bg = C_ERROR if danger else C_ACCENT if accent else C_BORDER
+    active_bg = C_ACCENT2 if accent else C_SURFACE
     return tk.Button(
         parent,
         text=text,
         command=command,
         bg=bg,
-        fg=C_TEXT,
-        activebackground=C_ACCENT2,
-        activeforeground="#0F172A",
+        fg="#FFFFFF" if accent or danger else C_TEXT,
+        activebackground=active_bg,
+        activeforeground="#FFFFFF" if accent or danger else C_TEXT,
         relief="flat",
         bd=0,
-        padx=10,
-        pady=5,
+        padx=12,
+        pady=7,
         cursor="hand2",
+        font=("Segoe UI", 9, "bold" if accent else "normal"),
         **kw,
     )
 
 
 def section_label(parent, text):
-    f = tk.Frame(parent, bg=C_PANEL)
-    tk.Label(f, text=text, bg=C_PANEL, fg=C_ACCENT2, font=("Segoe UI", 9, "bold")).pack(
+    bg = parent.cget("bg")
+    f = tk.Frame(parent, bg=bg)
+    tk.Label(f, text=text, bg=bg, fg=C_ACCENT2, font=("Segoe UI", 9, "bold")).pack(
         side="left"
     )
     tk.Frame(f, bg=C_BORDER, height=1).pack(
         side="left", fill="x", expand=True, padx=(8, 0)
     )
     return f
+
+
+def panel(parent, **kw):
+    return tk.Frame(parent, bg=C_SURFACE, highlightbackground=C_BORDER, highlightthickness=1, **kw)
+
+
+def panel_title(parent, title, subtitle=""):
+    bg = parent.cget("bg")
+    f = tk.Frame(parent, bg=bg)
+    tk.Label(f, text=title, bg=bg, fg=C_TEXT, font=("Segoe UI", 11, "bold")).pack(
+        anchor="w"
+    )
+    if subtitle:
+        tk.Label(
+            f,
+            text=subtitle,
+            bg=bg,
+            fg=C_MUTED,
+            font=("Segoe UI", 8),
+            justify="left",
+            wraplength=760,
+        ).pack(anchor="w", pady=(2, 0))
+    return f
+
+
+def field_row(parent, row, label, widget, unit=""):
+    bg = parent.cget("bg")
+    tk.Label(parent, text=label, bg=bg, fg=C_MUTED, anchor="w").grid(
+        row=row, column=0, sticky="w", padx=(0, 10), pady=5
+    )
+    widget.grid(row=row, column=1, sticky="we", pady=5)
+    if unit:
+        tk.Label(parent, text=unit, bg=bg, fg=C_MUTED).grid(
+            row=row, column=2, sticky="w", padx=(8, 0), pady=5
+        )
+    parent.columnconfigure(1, weight=1)
+
+
+def notice(parent, text, kind="info"):
+    colors = {"info": C_ACCENT2, "warn": C_WARN, "error": C_ERROR, "success": C_SUCCESS}
+    bg = parent.cget("bg")
+    return tk.Label(
+        parent,
+        text=text,
+        bg=bg,
+        fg=colors.get(kind, C_ACCENT2),
+        font=("Segoe UI", 8),
+        justify="left",
+        anchor="w",
+        wraplength=820,
+    )
 
 
 # ── Editable Table Widget ────────────────────────────────────────────────────

@@ -155,8 +155,8 @@ class StructureTab(tk.Frame):
             # Info label
             styled_label(
                 frame,
-                f"Properties for {display_name} layers. "
-                f"Double-click cells to edit. Boolean: 1=True, 0=False.",
+                f"Review {display_name} layers before generating. "
+                f"Double-click a cell to edit; checkbox fields toggle on double-click.",
                 fg=C_TIP,
                 font=("Segoe UI", 8, "italic"),
             ).pack(fill="x", padx=8, pady=(6, 2))
