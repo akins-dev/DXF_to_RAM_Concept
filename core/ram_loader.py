@@ -19,9 +19,10 @@ RAM Concept installed.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
-from core.dxf_reader import ImportResult
+if TYPE_CHECKING:
+    from core.dxf_reader import ImportResult
 from core.models import (
     ProjectConfig,
     LayerInstance,
@@ -124,11 +125,13 @@ def _api_load_values(lv: LoadValues) -> tuple[float, float, float, float, float]
     The local RAM Concept docs state that set_SI_API_units() uses meters and
     Newtons. The UI accepts kN, kN/m, and kN/m2, so every force/intensity and
     moment component is multiplied by 1000 before assigning it through the API.
+    The UI treats Fz as a positive downward gravity-load magnitude; RAM's
+    positive-sign API convention requires downward Fz loads to be negative.
     """
     return (
         lv.fx * KN_TO_N,
         lv.fy * KN_TO_N,
-        lv.fz * KN_TO_N,
+        -abs(lv.fz) * KN_TO_N,
         lv.mx * KN_TO_N,
         lv.my * KN_TO_N,
     )

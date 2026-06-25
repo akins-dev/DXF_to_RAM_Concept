@@ -216,8 +216,10 @@ Sub-tabs for Line Load, Area Load, and Point Load. Each row represents one DXF l
 
 **Load values format:** Comma-separated: `Fx,Fy,Fz,Mx,My`
 
+`Fz` is entered as a positive downward gravity-load magnitude. The importer converts it to RAM Concept's negative downward API sign convention before modelling.
+
 Examples:
-- Uniform dead load downward: `0,0,-5.0,0,0`
+- Uniform dead load downward: `0,0,5.0,0,0`
 - Horizontal live load: `10.0,0,0,0,0`
 - Zero load (skip): `0,0,0,0,0`
 

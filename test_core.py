@@ -20,10 +20,21 @@ from core.models import (
 print(f"✓ models: {len(SPEC_FACTORY)} spec factories")
 
 # Test LoadValues
-lv = LoadValues.from_string("0,0,-5.0,0,0")
-assert lv.fz == -5.0, f"Expected fz=-5.0, got {lv.fz}"
-assert lv.to_string() == "0.0,0.0,-5.0,0.0,0.0"
+lv = LoadValues.from_string("0,0,5.0,0,0")
+assert lv.fz == 5.0, f"Expected fz=5.0, got {lv.fz}"
+assert lv.to_string() == "0.0,0.0,5.0,0.0,0.0"
 print(f"  LoadValues: {lv.to_string()}")
+
+from core.ram_loader import _api_load_values
+
+assert _api_load_values(lv) == (0.0, 0.0, -5000.0, 0.0, 0.0)
+assert _api_load_values(LoadValues.from_string("0,0,-5.0,0,0")) == (
+    0.0,
+    0.0,
+    -5000.0,
+    0.0,
+    0.0,
+)
 
 # Test LayerInstance auto-spec
 li = LayerInstance(layer_name="test", role="slab")

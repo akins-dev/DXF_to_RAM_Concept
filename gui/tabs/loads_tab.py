@@ -96,7 +96,7 @@ class LoadsTab(tk.Frame):
             styled_label(
                 frame,
                 f"Double-click cells to edit. "
-                f"Values format: Fx,Fy,Fz,Mx,My  (e.g. 0,0,-5.0,0,0).  "
+                f"Values format: Fx,Fy,Fz,Mx,My  (e.g. 0,0,5.0,0,0 downward).  "
                 f"Units \u2014 {unit_hint}",
                 fg=C_TIP,
                 font=("Segoe UI", 8, "italic"),
