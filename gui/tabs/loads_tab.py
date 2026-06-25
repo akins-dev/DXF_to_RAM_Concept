@@ -16,26 +16,59 @@ from gui.widgets import EditableTable, styled_label
 from core.constants import LOAD_ROLES, LIVE_LOAD_TYPES
 from core.models import LineLoadSpec, AreaLoadSpec, PointLoadSpec, LoadValues
 
-# Common load table columns (same for all 3 load types)
-LOAD_COLUMNS = [
+# ── Per-role load table columns (units differ by load type) ──────────────────
+
+_LIVE_LOAD_TYPE_COL = {
+    "key": "live_load_type",
+    "label": "Live Load Type",
+    "width": 120,
+    "edit_type": "combo",
+    "values": LIVE_LOAD_TYPES,
+}
+
+LINELOAD_COLUMNS = [
     {"key": "layer_name", "label": "Layer Name", "width": 180, "editable": False},
-    {"key": "elevation_dead", "label": "Elevation Dead", "width": 110},
-    {"key": "value_dead", "label": "Value Dead (Fx,Fy,Fz,Mx,My)", "width": 200},
-    {"key": "elevation_live", "label": "Elevation Live", "width": 110},
-    {"key": "value_live", "label": "Value Live (Fx,Fy,Fz,Mx,My)", "width": 200},
-    {
-        "key": "live_load_type",
-        "label": "Live Load Type",
-        "width": 120,
-        "edit_type": "combo",
-        "values": LIVE_LOAD_TYPES,
-    },
+    {"key": "elevation_dead", "label": "Elev. Dead (m)", "width": 110},
+    {"key": "value_dead", "label": "Dead (Fx,Fy,Fz kN/m; Mx,My kN\u00b7m/m)", "width": 260},
+    {"key": "elevation_live", "label": "Elev. Live (m)", "width": 110},
+    {"key": "value_live", "label": "Live (Fx,Fy,Fz kN/m; Mx,My kN\u00b7m/m)", "width": 260},
+    _LIVE_LOAD_TYPE_COL,
 ]
+
+AREALOAD_COLUMNS = [
+    {"key": "layer_name", "label": "Layer Name", "width": 180, "editable": False},
+    {"key": "elevation_dead", "label": "Elev. Dead (m)", "width": 110},
+    {"key": "value_dead", "label": "Dead (Fx,Fy,Fz kN/m\u00b2; Mx,My kN\u00b7m/m\u00b2)", "width": 270},
+    {"key": "elevation_live", "label": "Elev. Live (m)", "width": 110},
+    {"key": "value_live", "label": "Live (Fx,Fy,Fz kN/m\u00b2; Mx,My kN\u00b7m/m\u00b2)", "width": 270},
+    _LIVE_LOAD_TYPE_COL,
+]
+
+POINTLOAD_COLUMNS = [
+    {"key": "layer_name", "label": "Layer Name", "width": 180, "editable": False},
+    {"key": "elevation_dead", "label": "Elev. Dead (m)", "width": 110},
+    {"key": "value_dead", "label": "Dead (Fx,Fy,Fz kN; Mx,My kN\u00b7m)", "width": 250},
+    {"key": "elevation_live", "label": "Elev. Live (m)", "width": 110},
+    {"key": "value_live", "label": "Live (Fx,Fy,Fz kN; Mx,My kN\u00b7m)", "width": 250},
+    _LIVE_LOAD_TYPE_COL,
+]
+
+ROLE_LOAD_COLUMNS: dict[str, list[dict]] = {
+    "lineload": LINELOAD_COLUMNS,
+    "areaload": AREALOAD_COLUMNS,
+    "pointload": POINTLOAD_COLUMNS,
+}
 
 ROLE_DISPLAY = {
     "lineload": "Line Load",
     "areaload": "Area Load",
     "pointload": "Point Load",
+}
+
+ROLE_UNIT_HINT = {
+    "lineload": "Forces: kN/m  |  Moments: kN\u00b7m/m",
+    "areaload": "Forces: kN/m\u00b2  |  Moments: kN\u00b7m/m\u00b2",
+    "pointload": "Forces: kN  |  Moments: kN\u00b7m",
 }
 
 
@@ -54,20 +87,22 @@ class LoadsTab(tk.Frame):
 
         for role in LOAD_ROLES:
             display_name = ROLE_DISPLAY.get(role, role)
+            unit_hint = ROLE_UNIT_HINT.get(role, "")
+            col_defs = ROLE_LOAD_COLUMNS.get(role, POINTLOAD_COLUMNS)
             frame = tk.Frame(nb, bg=C_PANEL)
             nb.add(frame, text=f"  {display_name}  ")
 
-            # Info label
+            # Info label with unit hint
             styled_label(
                 frame,
                 f"Double-click cells to edit. "
-                f"Values format: Fx,Fy,Fz,Mx,My  (e.g. 0,0,-5.0,0,0). "
-                f"Default signs: Fx,Fy,Fz,Mx,My follow default conventions.",
+                f"Values format: Fx,Fy,Fz,Mx,My  (e.g. 0,0,-5.0,0,0).  "
+                f"Units \u2014 {unit_hint}",
                 fg=C_MUTED,
                 font=("Segoe UI", 8, "italic"),
             ).pack(fill="x", padx=8, pady=(6, 2))
 
-            table = EditableTable(frame, LOAD_COLUMNS)
+            table = EditableTable(frame, col_defs)
             table.pack(fill="both", expand=True, padx=8, pady=4)
             self.tables[role] = table
 

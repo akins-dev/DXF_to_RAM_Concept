@@ -21,9 +21,9 @@ from core.constants import STRUCTURAL_ROLES
 SLAB_COLUMNS = [
     {"key": "layer_name", "label": "Layer Name", "width": 180, "editable": False},
     {"key": "priority", "label": "Priority", "width": 80},
-    {"key": "thickness", "label": "Thickness", "width": 100},
-    {"key": "toc", "label": "TOC", "width": 80},
-    {"key": "axis", "label": "Axis", "width": 80},
+    {"key": "thickness", "label": "Thickness (m)", "width": 110},
+    {"key": "toc", "label": "TOC (m)", "width": 90},
+    {"key": "axis", "label": "Axis (°)", "width": 80},
     {
         "key": "mesh_as_slab",
         "label": "Mesh as Slab",
@@ -34,9 +34,9 @@ SLAB_COLUMNS = [
 
 BEAM_COLUMNS = [
     {"key": "layer_name", "label": "Layer Name", "width": 180, "editable": False},
-    {"key": "width", "label": "Width", "width": 100},
-    {"key": "depth", "label": "Thickness/Depth", "width": 120},
-    {"key": "toc", "label": "TOC", "width": 80},
+    {"key": "width", "label": "Width (m)", "width": 110},
+    {"key": "depth", "label": "Thickness/Depth (m)", "width": 140},
+    {"key": "toc", "label": "TOC (m)", "width": 90},
     {"key": "priority", "label": "Priority", "width": 80},
     {
         "key": "mesh_as_slab",
@@ -48,7 +48,7 @@ BEAM_COLUMNS = [
 
 COLUMN_COLUMNS = [
     {"key": "layer_name", "label": "Layer Name", "width": 180, "editable": False},
-    {"key": "height", "label": "Height", "width": 80},
+    {"key": "height", "label": "Height (m)", "width": 90},
     {"key": "stiffness_factor", "label": "Stiffness Factor", "width": 110},
     {"key": "fixed_near", "label": "Fixed Near", "width": 80, "edit_type": "check"},
     {"key": "fixed_far", "label": "Fixed Far", "width": 80, "edit_type": "check"},
@@ -64,11 +64,11 @@ WALL_COLUMNS = [
     {"key": "below_slab", "label": "Below Slab", "width": 80, "edit_type": "check"},
     {"key": "above_slab", "label": "Above Slab", "width": 80, "edit_type": "check"},
     {"key": "compressible", "label": "Compressible", "width": 90, "edit_type": "check"},
-    {"key": "height", "label": "Height", "width": 80},
+    {"key": "height", "label": "Height (m)", "width": 90},
     {"key": "fixed_near", "label": "Fixed Near", "width": 80, "edit_type": "check"},
     {"key": "fixed_far", "label": "Fixed Far", "width": 80, "edit_type": "check"},
     {"key": "shear_wall", "label": "Shear Wall", "width": 80, "edit_type": "check"},
-    {"key": "thickness", "label": "Thickness", "width": 100},
+    {"key": "thickness", "label": "Thickness (m)", "width": 110},
     {"key": "specified_LLR", "label": "Specified LLR", "width": 100},
 ]
 
@@ -87,8 +87,8 @@ RECESS_COLUMNS = [
 
 DROP_CAP_COLUMNS = [
     {"key": "layer_name", "label": "Layer Name", "width": 180, "editable": False},
-    {"key": "thickness", "label": "Thickness", "width": 100},
-    {"key": "toc", "label": "TOC", "width": 80},
+    {"key": "thickness", "label": "Thickness (m)", "width": 110},
+    {"key": "toc", "label": "TOC (m)", "width": 90},
     {"key": "priority", "label": "Priority", "width": 80},
 ]
 
@@ -96,10 +96,13 @@ DROP_PANEL_COLUMNS = DROP_CAP_COLUMNS.copy()
 
 POINT_SUPPORT_COLUMNS = [
     {"key": "layer_name", "label": "Layer Name", "width": 250, "editable": False},
-    {"key": "spring_kv", "label": "Spring kv", "width": 120},
+    {"key": "spring_kv", "label": "Spring kv (kN/m)", "width": 130},
 ]
 
-LINE_SUPPORT_COLUMNS = POINT_SUPPORT_COLUMNS.copy()
+LINE_SUPPORT_COLUMNS = [
+    {"key": "layer_name", "label": "Layer Name", "width": 250, "editable": False},
+    {"key": "spring_kv", "label": "Spring kv (kN/m²)", "width": 130},
+]
 
 AREA_SPRING_COLUMNS = [
     {"key": "layer_name", "label": "Layer Name", "width": 200, "editable": False},
