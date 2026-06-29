@@ -229,7 +229,7 @@ Examples:
 
 | Property | Description | Default |
 |----------|------------|---------|
-| Concrete Name | Label for the mix | C45 |
+| Concrete Grade / Name | Editable mix name; typing common names like `C45` can set `fc_final` to 45 MPa | C45 |
 | fc_final (MPa) | 28-day compressive strength | 45 |
 | fc_initial (MPa) | Initial compressive strength | 30 |
 | Poisson's Ratio | — | 0.2 |
@@ -250,7 +250,7 @@ RAM Concept stores this data as linked objects:
 | Duct System | `DuctSystem` | Bond type, duct shape/type, duct dimensions, strands per duct, and friction values |
 | Anchor System | `AnchorSystem` | Anchorage type, jack stress, anchor friction, and seating distance |
 
-The system, duct shape, duct type, and anchor type fields are dropdowns because RAM Concept defines them as fixed enum values. The name fields are editable because they may refer to new or existing named objects in the RAM Concept model.
+The concrete grade/name field is a free-form input because RAM Concept stores concrete as named mix objects, not fixed grade enums. Common `Cxx` names update `fc_final`; custom names remain editable. The system, duct shape, duct type, and anchor type fields are dropdowns because RAM Concept defines them as fixed enum values. The name fields are editable because they may refer to new or existing named objects in the RAM Concept model.
 
 ### 6.5 Tab: Log
 

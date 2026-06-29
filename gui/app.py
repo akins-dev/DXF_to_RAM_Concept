@@ -32,7 +32,14 @@ from gui.tabs.loads_tab import LoadsTab
 from gui.tabs.materials_tab import MaterialsTab
 from gui.tabs.log_tab import LogTab
 
-from core.constants import UNIT_SCALES, DESIGN_CODES, STRUCTURE_TYPES, load_api_enums
+from core.constants import (
+    UNIT_SCALES,
+    DESIGN_CODES,
+    STRUCTURE_TYPES,
+    concrete_name_from_fc,
+    fc_from_concrete_name,
+    load_api_enums,
+)
 from core.models import (
     ProjectConfig,
     LayerInstance,
@@ -117,8 +124,10 @@ class App(tk.Tk):
         self.v_conc_name = tk.StringVar(value="C45")
         self.v_fc_final = tk.StringVar(value="45")
         self.v_fc_initial = tk.StringVar(value="30")
+        self._syncing_concrete_fields = False
+        self._last_auto_conc_name = concrete_name_from_fc(45)
 
-        # Auto-derive concrete name from fc_final
+        self.v_conc_name.trace_add("write", self._on_concrete_name_changed)
         self.v_fc_final.trace_add("write", self._on_fc_final_changed)
         self.v_poisson = tk.StringVar(value="0.2")
         self.v_unit_mass = tk.StringVar(value="2450")
@@ -293,18 +302,39 @@ class App(tk.Tk):
             "pt_wobble_friction": self.v_pt_wobble_friction,
         }
 
-    def _on_fc_final_changed(self, *args):
-        """Auto-derive concrete name (e.g. 'C45') when fc_final changes."""
-        val = self.v_fc_final.get().strip()
+    def _on_concrete_name_changed(self, *args):
+        """Apply common C-grade selections to the concrete strength field."""
+        if self._syncing_concrete_fields:
+            return
+        fc = fc_from_concrete_name(self.v_conc_name.get())
+        if fc is None:
+            return
+        self._syncing_concrete_fields = True
         try:
-            fc = float(val)
-            # Use integer formatting if it's a whole number
-            if fc.is_integer():
-                self.v_conc_name.set(f"C{int(fc)}")
-            else:
-                self.v_conc_name.set(f"C{fc}")
+            self.v_fc_final.set(f"{fc:g}")
+            self._last_auto_conc_name = concrete_name_from_fc(fc)
+        finally:
+            self._syncing_concrete_fields = False
+
+    def _on_fc_final_changed(self, *args):
+        """Auto-derive C-grade names without overwriting custom mix names."""
+        if self._syncing_concrete_fields:
+            return
+        try:
+            fc = float(self.v_fc_final.get().strip())
         except ValueError:
-            pass  # if user is typing or typed invalid number, do nothing
+            return
+
+        current_name = self.v_conc_name.get().strip()
+        if current_name and current_name != self._last_auto_conc_name:
+            return
+
+        self._syncing_concrete_fields = True
+        try:
+            self._last_auto_conc_name = concrete_name_from_fc(fc)
+            self.v_conc_name.set(self._last_auto_conc_name)
+        finally:
+            self._syncing_concrete_fields = False
 
     # ══════════════════════════════════════════════════════════════════════════
     # API Enum Discovery
@@ -328,6 +358,13 @@ class App(tk.Tk):
         """Refresh design code and structure type dropdowns with discovered values."""
         if hasattr(self, 'files_tab') and self.files_tab:
             self.files_tab.refresh_dropdowns()
+
+    def _sync_layer_concrete_names(self, concrete_name: str):
+        """Use the active material mix for all concrete-bearing layer specs."""
+        for li in self._layer_instances:
+            spec = getattr(li, "spec", None)
+            if spec is not None and hasattr(spec, "concrete_name"):
+                spec.concrete_name = concrete_name
 
     # ══════════════════════════════════════════════════════════════════════════
     # Actions
@@ -558,6 +595,9 @@ class App(tk.Tk):
         self._log(f"  Geometry: {total_geom} items  |  Loads: {total_loads} items")
 
         # 3. Build config
+        concrete_spec = self.materials_tab.get_concrete_spec()
+        self._sync_layer_concrete_names(concrete_spec.name)
+
         config = ProjectConfig(
             dxf_path=dxf_path,
             output_cpt_path=self.v_output.get(),
@@ -565,7 +605,7 @@ class App(tk.Tk):
             design_code=self.v_design_code.get(),
             structure_type=self.v_struct_type.get(),
             unit_key=self.v_unit_key.get(),
-            concrete=self.materials_tab.get_concrete_spec(),
+            concrete=concrete_spec,
             pt_system=self.materials_tab.get_pt_spec(),
             layer_instances=self._layer_instances,
             mesh_after=self.v_mesh_after.get(),

@@ -7,6 +7,9 @@ for the DXF → RAM Concept importer.
 
 from __future__ import annotations
 
+import re
+from typing import Optional
+
 # ---------------------------------------------------------------------------
 # Design code & structure type registries
 #
@@ -121,3 +124,21 @@ ALL_ROLES = STRUCTURAL_ROLES + LOAD_ROLES
 # ---------------------------------------------------------------------------
 
 LIVE_LOAD_TYPES = ["Reducible", "Unreducible"]
+# ---------------------------------------------------------------------------
+# Concrete grade/name helpers
+#
+# RAM Concept does not expose concrete grades as a fixed enum. Concrete mixes
+# are named model objects; the GUI accepts free-form names.
+# ---------------------------------------------------------------------------
+def concrete_name_from_fc(fc: float) -> str:
+    """Return the conventional C-grade name for a cylinder strength in MPa."""
+    strength = float(fc)
+    return f"C{int(strength)}" if strength.is_integer() else f"C{strength:g}"
+
+
+def fc_from_concrete_name(name: str) -> Optional[float]:
+    """Parse common concrete names like C45 or C30/37 into cylinder MPa."""
+    match = re.fullmatch(r"\s*C\s*(\d+(?:\.\d+)?)(?:\s*/\s*\d+(?:\.\d+)?)?\s*", name, re.I)
+    if not match:
+        return None
+    return float(match.group(1))

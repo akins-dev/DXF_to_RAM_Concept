@@ -239,8 +239,8 @@ def main():
     parser.add_argument(
         "--concrete-name",
         type=str,
-        default="45 MPa",
-        help="Concrete name (default: 45 MPa)",
+        default="C45",
+        help="Concrete mix name (default: C45)",
     )
     parser.add_argument(
         "--fc", type=float, default=45.0, help="Concrete fc in MPa (default: 45)"

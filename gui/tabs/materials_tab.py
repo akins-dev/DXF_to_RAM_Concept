@@ -124,7 +124,7 @@ class MaterialsTab(tk.Frame):
         grid = tk.Frame(parent, bg=parent.cget("bg"))
         grid.pack(fill="x", padx=14, pady=(0, 12))
         fields = [
-            ("Name", styled_entry(grid, self.app.v_conc_name, width=22), ""),
+            ("Grade / name", styled_entry(grid, self.app.v_conc_name, width=22), ""),
             ("fc final", styled_entry(grid, self.app.v_fc_final, width=22), "MPa"),
             ("fc initial", styled_entry(grid, self.app.v_fc_initial, width=22), "MPa"),
             ("Poisson ratio", styled_entry(grid, self.app.v_poisson, width=22), ""),
@@ -233,6 +233,7 @@ class MaterialsTab(tk.Frame):
             style="Dark.TCombobox",
             width=22,
         )
+
 
     def _add_pt_row(self, bucket, parent, row, label, widget, unit=""):
         field_row(parent, row, label, widget, unit)

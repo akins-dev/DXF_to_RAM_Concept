@@ -129,7 +129,6 @@ def add_concrete_mix(
     fc values must be in MPa (e.g. 45, not 45000000).
     """
     concretes = model.concretes
-    c = concretes.add_concrete(concrete_spec.name)
 
     # Guard: if fc looks like Pa instead of MPa, auto-correct
     fc_final = concrete_spec.fc_final
@@ -138,7 +137,13 @@ def add_concrete_mix(
         fc_final = fc_final / 1e6
     if fc_initial > 1000:
         fc_initial = fc_initial / 1e6
+    if fc_initial > fc_final:
+        raise ValueError(
+            f"Concrete fc_initial ({fc_initial:g} MPa) must be less than or equal to "
+            f"fc_final ({fc_final:g} MPa)."
+        )
 
+    c = concretes.add_concrete(concrete_spec.name)
     c.fc_final = fc_final
     c.fc_initial = fc_initial
     c.poissons_ratio = concrete_spec.poissons_ratio
